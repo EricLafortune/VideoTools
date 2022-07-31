@@ -1,0 +1,30 @@
+# LPC frames (voiced, unvoiced, repeat, silence, stop) for the TMS5200 speech
+# synthesizer in a simple text format.
+#
+# The word "hello" from the built-in vocabulary.
+
+0
+0
+0
+3 20d34
+2 22f3b
+4 23135
+e 2a 4a4f2ccb6d
+e 2a
+e 2a
+e 2a 4dcb76e935
+d 2a
+c 28 4457550134
+b 26
+b 26
+c 26 398fd0c33e
+d 28
+d 2b
+b 2e 229588c7ab
+a 30
+8 30 227964e972
+7 30 1f152c3372
+5 31 1ef8e8cceb
+5 31 1e992aa8ec
+4 31 2575336a18
+f
