@@ -81,7 +81,7 @@ implements   VideoOutputStream
     {
         checkBank(4 + size);
 
-        writeWord(swapBytes(size));
+        writeSwappedWord(size);
         writeSwappedWord(0x4000 | address);
 
         bankByteCount += 4 + size;
