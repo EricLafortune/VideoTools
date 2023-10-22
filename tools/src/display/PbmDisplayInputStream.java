@@ -54,7 +54,7 @@ implements   DisplayInputStream
 
         Display display = new Display();
 
-        for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+        for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
         {
             Display.Section section = display.section[sectionIndex];
             byte[] screenImageTable = section.screenImageTable;
@@ -183,7 +183,7 @@ implements   DisplayInputStream
         {
             Display display = pbmDisplayInputStream.readFrame();
 
-            for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+            for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
             {
                 byte[] screenImageTable = display.section[sectionIndex].screenImageTable;
 

@@ -28,6 +28,9 @@ import java.util.Arrays;
  */
 public class Display
 {
+    public static final int SECTION_COUNT = 3;
+
+
     public Section[] section = new Section[]
     {
         new Section(),

@@ -67,7 +67,7 @@ implements   AutoCloseable
 
         // Write the changed contents of the pattern table and the color
         // table (at 25 fps).
-        for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+        for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
         {
             Display.Section referenceSection = referenceDisplay.section[sectionIndex];
             Display.Section targetSection    = targetDisplay.section[sectionIndex];
@@ -87,7 +87,7 @@ implements   AutoCloseable
     throws IOException
     {
         // Write the changed characters of the screen image table (at 25 fps).
-        for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+        for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
         {
             Display.Section referenceSection = referenceDisplay.section[sectionIndex];
             Display.Section targetSection    = targetDisplay.section[sectionIndex];
@@ -120,7 +120,7 @@ implements   AutoCloseable
     {
         // Find and write different spans.
         int startCharacter;
-        int endCharacter = 2;
+        int endCharacter = 0;
 
         while ((startCharacter = findDifferent(referenceTable,
                                                targetTable,

@@ -113,7 +113,7 @@ implements   DisplayInputStream
 
         Display display = new Display();
 
-        for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+        for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
         {
             Display.Section section = display.section[sectionIndex];
             byte[] screenImageTable = section.screenImageTable;
@@ -298,6 +298,7 @@ implements   DisplayInputStream
      * Prints out the display characters of the specified image file.
      */
     public static void main(String[] args)
+    throws IOException
     {
         try (ImageDisplayInputStream displayInputStream =
                  new ImageDisplayInputStream(
@@ -307,7 +308,7 @@ implements   DisplayInputStream
             Display display = displayInputStream.readFrame();
 
             System.out.println("Screen image table:");
-            for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+            for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
             {
                 byte[] screenImageTable = display.section[sectionIndex].screenImageTable;
 
@@ -324,7 +325,7 @@ implements   DisplayInputStream
             System.out.println();
 
             System.out.println("Pattern table:");
-            for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+            for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
             {
                 long[] patternTable = display.section[sectionIndex].patternTable;
 
@@ -341,7 +342,7 @@ implements   DisplayInputStream
             System.out.println();
 
             System.out.println("Color table:");
-            for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
+            for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
             {
                 long[] colorTable = display.section[sectionIndex].colorTable;
 
@@ -355,10 +356,6 @@ implements   DisplayInputStream
                     System.out.println("...");
                 }
             }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
         }
     }
 }
