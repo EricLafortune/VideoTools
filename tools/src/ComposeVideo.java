@@ -26,11 +26,11 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This utility combines animation files (.zip with .pbm), sound files (.vgm,
- * .snd), and speech files (.lpc) in a single file (.tms).
+ * This utility combines animation files (.pbm, .png, .gif, .jpg, .bmp, .zip),
+ * sound files (.vgm, .snd), and speech files (.lpc) in a single file (.tms).
  *
  * Usage:
- *     java ComposeVideo [-50Hz|-60Hz][offset:]input.{zip|vgm|snd|lpc}[,skip] ... output.tms
+ *     java ComposeVideo [-50Hz|-60Hz] [offset:]input.{zip|vgm|snd|lpc}[,skip] ... output.tms
  *
  * where
  *     -50Hz  specifies a European target system with a display refresh of
@@ -65,13 +65,13 @@ public class ComposeVideo
 
         if (args[argIndex].equals("-50Hz"))
         {
-            // European system at 50 Hz.
+            // PAL system at 50 Hz (Europe).
             lpcStreamSkipRate = 5;
             argIndex++;
         }
         else if (args[argIndex].equals("-60Hz"))
         {
-            // US system at 60 Hz.
+            // NTSC system at 60 Hz (US).
             lpcStreamSkipRate = 3;
             argIndex++;
         }
@@ -109,7 +109,7 @@ public class ComposeVideo
                 // Open new files for which we've reached the start frame.
                 while (inputFileIndex < inputFiles.length)
                 {
-                    // Is it to early to open the file?
+                    // Is it too early to open the file?
                     FileAtFrame inputFile = inputFiles[inputFileIndex];
                     if (inputFile.frameIndex > videoOutputStream.getVsyncCount())
                     {
