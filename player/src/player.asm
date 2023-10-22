@@ -128,14 +128,14 @@ bank_loop
 
     li   r1, >6000             ; Set the first frame.
 
-* Render a frame (video, sound, and speech).
+* Stream a chunk (video, sound, or speech).
 frame_loop
     movb *r1+, r2
     swpb r2
     movb *r1+, r2
     jlt  !
 
-* Draw subsequent bytes of video data.
+* Stream a chunk of video data.
 
 ; Simple version without loop unrolling.
 ;                               ; Write the pre-swapped VDP address.
@@ -176,10 +176,10 @@ unrolled_video_loop_end
     jne  unrolled_video_loop
     jmp  frame_loop
 
-!   ai   r2, >0020             ; Did we get a sound video?
+!   ai   r2, >0020             ; Did we get a sound chunk?
     jlt  !
 
-* Play subsequent bytes of sound data.
+* Stream a chunk of sound data.
 sound_loop                     ; Copy the video to the sound processor.
     movb *r1+, *r13            ;: d-
     dec  r2
@@ -189,7 +189,7 @@ sound_loop                     ; Copy the video to the sound processor.
 !   ai   r2, >0010             ; Did we get a speech video?
     jlt  !
 
-* Play subsequent bytes of speech data.
+* Stream a chunk of speech data.
 speech_loop                    ; Copy the video to the speech synthesizer.
     movb *r1+, *r11            ;: d-
     dec  r2
