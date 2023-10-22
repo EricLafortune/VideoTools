@@ -74,8 +74,6 @@ class SoundCommandParser
                 {
                     int generator = ((commandNibble - TONE1_VOLUME) >>> 5) + SoundCommand.TONE1;
                     int volume    = b & 0x0f;
-//int volume    = commandNibble == TONE3_VOLUME || commandNibble == NOISE_VOLUME ? b & 0x0f : 0x0f;
-//int volume    = commandNibble == TONE1_VOLUME ? b & 0x0f : 0x0f;
 
                     soundCommand = new VolumeCommand(generator, volume);
                     break;
