@@ -32,6 +32,8 @@ import java.io.*;
 public class VgmInputStream
 implements   SoundInputStream
 {
+    private static final boolean DEBUG = false;
+
     private static final int COMMAND_PSG       = 0x50;
     private static final int COMMAND_WAIT      = 0x61;
     private static final int COMMAND_WAIT_60HZ = 0x62;
@@ -85,12 +87,22 @@ implements   SoundInputStream
         // Collect the sound data.
         byte[] soundData      = new byte[64];
         int    soundDataCount = 0;
-//System.err.println("Time: "+requestTime+" ~ "+time);
+
+        if (DEBUG)
+        {
+            System.err.println("Time = "+requestTime);
+        }
+
         loop: while (streamTime <= requestTime)
         {
             // Parse the next command.
             int b = inputStream.read();
-//System.err.println(String.format("Command %02x", b));
+
+            if (DEBUG)
+            {
+                System.err.println(String.format("Command %02x", b));
+            }
+
             switch (b)
             {
                 case COMMAND_PSG:
@@ -142,12 +154,17 @@ implements   SoundInputStream
         byte[] trimmedSoundData = new byte[soundDataCount];
         System.arraycopy(soundData, 0,
                          trimmedSoundData, 0, soundDataCount);
-//System.err.print("Sound >");
-//for (int i = 0; i < trimmedSoundData.length; i++)
-//{
-//    System.err.print(String.format("%02x",  trimmedSoundData[i]));
-//}
-//System.err.println();
+
+        if (DEBUG)
+        {
+            System.err.print("Sound >");
+            for (int i = 0; i < trimmedSoundData.length; i++)
+            {
+                System.err.print(String.format("  %02x",  trimmedSoundData[i]));
+            }
+            System.err.println();
+        }
+
         return trimmedSoundData;
     }
 
