@@ -89,12 +89,12 @@ public enum LpcQuantization
     // Energy tables.
     private static final int[] TI_0280_PATENT_ENERGY =
     {
-        0, 0, 1, 1, 2, 3, 5, 7, 10, 15, 21, 30, 43, 61, 86 //, 0
+        0, 0, 1, 1, 2, 3, 5, 7, 10, 15, 21, 30, 43, 61, 86, 0
     };
 
     private static final int[] TI_028X_LATER_ENERGY =
     {
-        0, 1, 2, 3, 4, 6, 8, 11, 16, 23, 33, 47, 63, 85, 114 //, 0
+        0, 1, 2, 3, 4, 6, 8, 11, 16, 23, 33, 47, 63, 85, 114, 0
     };
 
     // Pitch tables.
@@ -254,18 +254,18 @@ public enum LpcQuantization
     };
 
     // Chirp tables.
-    private static final int[] TI_0280_PATENT_CHIRP =
+    private static final byte[] TI_0280_PATENT_CHIRP =
     {
-        0x00, 0x2a, 0xd4, 0x32, 0xb2, 0x12, 0x25, 0x14,
-        0x02, 0xe1, 0xc5, 0x02, 0x5f, 0x5a, 0x05, 0x0f,
-        0x26, 0xfc, 0xa5, 0xa5, 0xd6, 0xdd, 0xdc, 0xfc,
-        0x25, 0x2b, 0x22, 0x21, 0x0f, 0xff, 0xf8, 0xee,
-        0xed, 0xef, 0xf7, 0xf6, 0xfa, 0x00, 0x03, 0x02,
-        0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00
+        (byte)0x00, (byte)0x2a, (byte)0xd4, (byte)0x32, (byte)0xb2, (byte)0x12, (byte)0x25, (byte)0x14,
+        (byte)0x02, (byte)0xe1, (byte)0xc5, (byte)0x02, (byte)0x5f, (byte)0x5a, (byte)0x05, (byte)0x0f,
+        (byte)0x26, (byte)0xfc, (byte)0xa5, (byte)0xa5, (byte)0xd6, (byte)0xdd, (byte)0xdc, (byte)0xfc,
+        (byte)0x25, (byte)0x2b, (byte)0x22, (byte)0x21, (byte)0x0f, (byte)0xff, (byte)0xf8, (byte)0xee,
+        (byte)0xed, (byte)0xef, (byte)0xf7, (byte)0xf6, (byte)0xfa, (byte)0x00, (byte)0x03, (byte)0x02,
+        (byte)0x01, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00
     };
 
-    private static final int[] TI_LATER_CHIRP =
+    private static final byte[] TI_LATER_CHIRP =
     {
         0x00, 0x03, 0x0f, 0x28, 0x4c, 0x6c, 0x71, 0x50,
         0x25, 0x26, 0x4c, 0x44, 0x1a, 0x32, 0x3b, 0x13,
@@ -286,16 +286,16 @@ public enum LpcQuantization
     private static final boolean DEBUG = false;
 
 
-    private final int     unvoicedLpcCoefficientCount;
-    private final int     voicedLpcCoefficientCount;
-    private final int     energyBitCount;
-    private final int     pitchBitCount;
-    private final int[]   lpcCoefficientBitCounts;
-    private final int[]   energyTable;
-    private final int[]   pitchTable;
-    private final int[][] lpcCoefficientTable;
-    private final int[]   chirpTable;
-    private final int[]   interpolationTable;
+    public final int     unvoicedLpcCoefficientCount;
+    public final int     voicedLpcCoefficientCount;
+    public final int     energyBitCount;
+    public final int     pitchBitCount;
+    public final int[]   lpcCoefficientBitCounts;
+    public final int[]   energyTable;
+    public final int[]   pitchTable;
+    public final int[][] lpcCoefficientTable;
+    public final byte[]  chirpTable;
+    public final int[]   interpolationTable;
 
 
     /**
@@ -309,7 +309,7 @@ public enum LpcQuantization
                     int[]   energyTable,
                     int[]   pitchTable,
                     int[][] lpcCoefficientTable,
-                    int[]   chirpTable,
+                    byte[]  chirpTable,
                     int[]   interpolationTable)
     {
         this.unvoicedLpcCoefficientCount = unvoicedLpcCoefficientCount;
@@ -326,13 +326,52 @@ public enum LpcQuantization
 
 
     /**
+     * Returns the minimum encoded energy of a voiced or unvoiced frame.
+     */
+    public int minEncodedEnergy()
+    {
+        return 1;
+    }
+
+
+    /**
+     * Returns the maximum encoded energy of a voiced or unvoiced frame.
+     */
+    public int maxEncodedEnergy()
+    {
+        return (1 << energyBitCount) - 2;
+    }
+
+
+    /**
      * Quantizes and encodes the given energy as an integer,
      * which can be used in an {@link LpcFrame}.
      * @param energy the energy as a value between 0 and 1.
      */
     public int encodeEnergy(double energy)
     {
-        return nearestValueIndex(energyTable, intEnergy(energy));
+        return nearestValueIndex(energyTable,
+                                 0,
+                                 energyTable.length - 2,
+                                 intEnergy(energy));
+    }
+
+
+    /**
+     * Returns the minimum encoded pitch of a voiced or unvoiced frame.
+     */
+    public int minEncodedPitch()
+    {
+        return 1;
+    }
+
+
+    /**
+     * Returns the maximum encoded pitch of a voiced frame.
+     */
+    public int maxEncodedPitch()
+    {
+        return (1 << pitchBitCount) - 1;
     }
 
 
@@ -343,7 +382,81 @@ public enum LpcQuantization
      */
     public int encodePitch(double frequency)
     {
-        return nearestValueIndex(pitchTable, pitch(frequency));
+        return encodePitch(pitch(frequency));
+    }
+
+
+    /**
+     * Quantizes and encodes the given pitch as an integer pitch that
+     * can be used in an {@link LpcFrame}.
+     * @param pitch the pitch expressed in samples.
+     */
+    public int encodePitch(int pitch)
+    {
+        return nearestValueIndex(pitchTable,
+                                 1,
+                                 pitchTable.length - 1,
+                                 pitch);
+    }
+
+
+    /**
+     * Decodes the given LPC coefficient indices from a single long integer,
+     * from an {@link LpcFrame}, to an array.
+     * @param k      the quantized LPC reflection coefficients encoded as a
+     *               single long integer.
+     * @param voiced a flag that indicates whether the coefficients are
+     *               for a voiced frame or an unvoiced frame.
+     * @return       the quantized LPC reflection coefficients, typically up
+     *               to 4 (unvoiced) or up to 10 (voiced), with values between
+     *               0 and 2^5, 2^4, or 2^3.
+     */
+    public int[] decodeLpcCoefficients(long k, boolean voiced)
+    {
+        int count = voiced ?
+            voicedLpcCoefficientCount :
+            unvoicedLpcCoefficientCount;
+
+        int[] result = new int[count];
+
+        for (int index = count - 1; index >= 0; index--)
+        {
+            int bitCount = lpcCoefficientBitCounts[index];
+
+            result[index] = (int)(k & (2 << bitCount-1)-1);
+            k >>>= bitCount;
+        }
+
+        return result;
+    }
+
+
+    /**
+     * Encodes the given LPC coefficient indices into a single long integer,
+     * which can be used in an {@link LpcFrame}.
+     * @param k      the quantized LPC reflection coefficients, typically up
+     *               to 4 (unvoiced) or up to 10 (voiced), with values between
+     *               0 and 2^5, 2^4, or 2^3.
+     * @param voiced a flag that indicates whether the coefficients are
+     *               for a voiced frame or an unvoiced frame.
+     * @return       the quantized LPC reflection coefficients encoded as a
+     *               single long integer.
+     */
+    public long encodeLpcCoefficients(int[] k, boolean voiced)
+    {
+        long result = 0L;
+
+        int count = voiced ?
+            voicedLpcCoefficientCount :
+            unvoicedLpcCoefficientCount;
+
+        for (int index = 0; index < count; index++)
+        {
+            result <<= lpcCoefficientBitCounts[index];
+            result |= k[index];
+        }
+
+        return result;
     }
 
 
@@ -355,6 +468,8 @@ public enum LpcQuantization
      *               -1 and 1.
      * @param voiced a flag that indicates whether the coefficients are
      *               for a voiced frame or an unvoiced frame.
+     * @return       the quantized LPC reflection coefficients encoded as a
+     *               single long integer.
      */
     public long encodeLpcCoefficients(double[] k, boolean voiced)
     {
@@ -387,7 +502,7 @@ public enum LpcQuantization
     }
 
 
-    private static int pitch(double frequency)
+    public int pitch(double frequency)
     {
         return (int)Math.round(8000.0 / frequency - 1.0);
     }
@@ -413,31 +528,37 @@ public enum LpcQuantization
 
     private int nearestValueIndex(int[] values, int value)
     {
-        // Perform a binary search.
-        int lowIndex  = 0;
-        int highIndex = values.length - 1;
+        return nearestValueIndex(values, 0, values.length-1, value);
+    }
 
-        while (lowIndex+1 < highIndex)
+
+    private int nearestValueIndex(int[] values,
+                                  int   minIndex,
+                                  int   maxIndex,
+                                  int   value)
+    {
+        // Perform a binary search.
+        while (minIndex+1 < maxIndex)
         {
-            int middleIndex = (lowIndex + highIndex) / 2;
+            int middleIndex = (minIndex + maxIndex) / 2;
             if (values[middleIndex] < value)
             {
-                lowIndex = middleIndex;
+                minIndex = middleIndex;
             }
             else
             {
-                highIndex = middleIndex;
+                maxIndex = middleIndex;
             }
         }
 
         // Pick the closest of the two surrounding values.
-        int nearestIndex = 2 * value < values[lowIndex] + values[highIndex] ?
-            lowIndex :
-            highIndex;
+        int nearestIndex = 2 * value < values[minIndex] + values[maxIndex] ?
+            minIndex :
+            maxIndex;
 
         if (DEBUG)
         {
-            System.out.println("Value "+value+" in (0..."+values.length+") ["+values[0]+"..."+values[values.length-1]+"] -> ("+lowIndex+","+highIndex+") ["+values[lowIndex]+","+values[highIndex]+"] -> ("+nearestIndex+") ["+values[nearestIndex]+"]"+(value < values[0] || value > values[values.length-1] ? " (clipped)":""));
+            System.out.println("Value "+value+" in (0..."+values.length+") ["+values[0]+"..."+values[values.length-1]+"] -> ("+minIndex+","+maxIndex+") ["+values[minIndex]+","+values[maxIndex]+"] -> ("+nearestIndex+") ["+values[nearestIndex]+"]"+(value < values[0] || value > values[values.length-1] ? " (clipped)":""));
         }
 
         return nearestIndex;

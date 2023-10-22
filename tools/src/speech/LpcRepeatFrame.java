@@ -23,19 +23,15 @@ package speech;
  * This LpcFrame represents a repeat frame.
  */
 public class LpcRepeatFrame
+extends      LpcPitchFrame
 implements   LpcFrame
 {
-    public int energy;
-    public int pitch;
-
-
     /**
      * Creates a new instance with the given energy and pitch.
      */
     public LpcRepeatFrame(int energy, int pitch)
     {
-        this.energy = energy;
-        this.pitch  = pitch;
+        super(energy, pitch);
     }
 
 
@@ -53,6 +49,22 @@ implements   LpcFrame
             (long)(energy << 7) |
             (long)(    1L << 6) |
             (long)( pitch     );
+    }
+
+
+    public String toString(LpcQuantization quantization)
+    {
+        return String.format("Voiced(energy=%3d, pitch=%3d)",
+                             quantization.energyTable[energy],
+                             quantization.pitchTable[pitch]);
+    }
+
+
+    // Implementation for Cloneable.
+
+    public LpcRepeatFrame clone()
+    {
+        return (LpcRepeatFrame)super.clone();
     }
 
 

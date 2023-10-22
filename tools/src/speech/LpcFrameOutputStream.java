@@ -86,6 +86,7 @@ implements   AutoCloseable
      * Copies the frames of the specified LPC file to the specified new file.
      */
     public static void main(String[] args)
+    throws IOException
     {
         try (LpcFrameInputStream lpcFrameInputStream =
                  new LpcFrameInputStream(
@@ -103,10 +104,6 @@ implements   AutoCloseable
                     lpcFrameOutputStream.writeFrame(frame);
                 }
             }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
         }
     }
 }

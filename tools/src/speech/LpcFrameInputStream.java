@@ -65,7 +65,7 @@ implements   AutoCloseable
 
     /**
      * Parses and returns the next LPC frame in the stream (which contains frames
-     * at a rate of 25 fps).
+     * at a rate of 40 fps).
      */
     public LpcFrame readFrame() throws IOException
     {
@@ -185,25 +185,43 @@ implements   AutoCloseable
      * Prints out the frames of the specified LPC file.
      */
     public static void main(String[] args)
+    throws IOException
     {
+        LpcQuantization quantization = null;
+
+        int argIndex = 0;
+
+        while (args[argIndex].startsWith("-"))
+        {
+            quantization = switch (args[argIndex++])
+            {
+                case "-tms5200" -> LpcQuantization.TMS5200;
+                case "-tms5220" -> LpcQuantization.TMS5220;
+                default         -> throw new IllegalArgumentException("Unknown option [" + args[--argIndex] + "]");
+            };
+        }
+
+        String inputFileName  = args[argIndex++];
+
         try (LpcFrameInputStream lpcFrameInputStream =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
-                 new FileInputStream(args[0]))))
+                 new FileInputStream(inputFileName))))
         {
             int counter = 0;
 
             LpcFrame frame;
             while ((frame = lpcFrameInputStream.readFrame()) != null)
             {
-                System.out.println("#"+counter+" ("+String.format("%.3f", counter*0.025)+"): "+frame);
+                System.out.printf("#%03d (%.3f): %s%n",
+                                  counter,
+                                  counter*0.025,
+                                  quantization == null ?
+                                      frame.toString() :
+                                      frame.toString(quantization));
 
                 counter++;
             }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
         }
     }
 }

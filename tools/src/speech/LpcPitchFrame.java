@@ -20,50 +20,30 @@
 package speech;
 
 /**
- * This LpcFrame represents a stop frame.
+ * This LpcFrame represents a frame that has am energy and a pitch.
  */
-public class LpcStopFrame
-implements   LpcFrame
+public abstract class LpcPitchFrame
+extends               LpcEnergyFrame
+implements            LpcFrame
 {
-    // Implementations for LpcFrame.
+    public int pitch;
 
-    public int bitCount()
+
+    /**
+     * Creates a new instance with the given energy and pitch.
+     */
+    public LpcPitchFrame(int energy, int pitch)
     {
-        return 4;
-    }
+        super(energy);
 
-
-    public long toBits()
-    {
-        return 0xfL;
-    }
-
-
-    public String toString(LpcQuantization quantization)
-    {
-        return toString();
+        this.pitch = pitch;
     }
 
 
     // Implementation for Cloneable.
 
-    public LpcStopFrame clone()
+    public LpcPitchFrame clone()
     {
-        try
-        {
-            return (LpcStopFrame)super.clone();
-        }
-        catch (CloneNotSupportedException e)
-        {
-            throw new Error(e);
-        }
-    }
-
-
-    // Implementations for Object.
-
-    public String toString()
-    {
-        return "Stop";
+        return (LpcPitchFrame)super.clone();
     }
 }

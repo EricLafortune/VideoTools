@@ -23,9 +23,9 @@ package speech;
  * This LpcFrame represents an unvoiced frame.
  */
 public class LpcUnvoicedFrame
+extends      LpcEnergyFrame
 implements   LpcFrame
 {
-    public int  energy;
     public long k;
 
 
@@ -34,8 +34,9 @@ implements   LpcFrame
      */
     public LpcUnvoicedFrame(int energy, long k)
     {
-        this.energy = energy;
-        this.k      = k;
+        super(energy);
+
+        this.k = k;
     }
 
 
@@ -52,6 +53,35 @@ implements   LpcFrame
         return
             ((long)energy << 25) |
             (           k      );
+    }
+
+
+    public String toString(LpcQuantization quantization)
+    {
+        int[] ks = quantization.decodeLpcCoefficients(k, false);
+
+        StringBuilder builder = new StringBuilder();
+        for (int index = 0; index < ks.length; index++)
+        {
+            builder.append(String.format("%4d",
+                                         quantization.lpcCoefficientTable[index][ks[index]]));
+            if (index < ks.length-1)
+            {
+                builder.append(',');
+            }
+        }
+
+        return String.format("Unvoiced(energy=%3d, k={%s})",
+                             quantization.energyTable[energy],
+                             builder.toString());
+    }
+
+
+    // Implementation for Cloneable.
+
+    public LpcUnvoicedFrame clone()
+    {
+        return (LpcUnvoicedFrame)super.clone();
     }
 
 

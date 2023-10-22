@@ -23,10 +23,9 @@ package speech;
  * This LpcFrame represents a voiced frame.
  */
 public class LpcVoicedFrame
+extends      LpcPitchFrame
 implements   LpcFrame
 {
-    public int  energy;
-    public int  pitch;
     public long k;
 
 
@@ -36,9 +35,9 @@ implements   LpcFrame
      */
     public LpcVoicedFrame(int energy, int pitch, long k)
     {
-        this.energy = energy;
-        this.pitch  = pitch;
-        this.k      = k;
+        super(energy, pitch);
+
+        this.k = k;
     }
 
 
@@ -56,6 +55,36 @@ implements   LpcFrame
             ((long)energy << 46) |
             ((long) pitch << 39) |
             (           k      );
+    }
+
+
+    public String toString(LpcQuantization quantization)
+    {
+        int[] ks = quantization.decodeLpcCoefficients(k, true);
+
+        StringBuilder builder = new StringBuilder();
+        for (int index = 0; index < ks.length; index++)
+        {
+            builder.append(String.format("%4d",
+                                         quantization.lpcCoefficientTable[index][ks[index]]));
+            if (index < ks.length-1)
+            {
+                builder.append(',');
+            }
+        }
+
+        return String.format("Voiced(energy=%3d, pitch=%3d, k={%s})",
+                             quantization.energyTable[energy],
+                             quantization.pitchTable[pitch],
+                             builder.toString());
+    }
+
+
+    // Implementation for Cloneable.
+
+    public LpcVoicedFrame clone()
+    {
+        return (LpcVoicedFrame)super.clone();
     }
 
 

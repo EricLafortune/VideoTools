@@ -39,6 +39,27 @@ implements   LpcFrame
     }
 
 
+    public String toString(LpcQuantization quantization)
+    {
+        return toString();
+    }
+
+
+    // Implementation for Cloneable.
+
+    public LpcSilenceFrame clone()
+    {
+        try
+        {
+            return (LpcSilenceFrame)super.clone();
+        }
+        catch (CloneNotSupportedException e)
+        {
+            throw new Error(e);
+        }
+    }
+
+
     // Implementations for Object.
 
     public String toString()

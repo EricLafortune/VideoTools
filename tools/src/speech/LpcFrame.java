@@ -26,13 +26,18 @@ package speech;
  * @see http://www.unige.ch/medecine/nouspikel/ti99/speech.htm
  */
 public interface LpcFrame
+extends          Cloneable
 {
     public int bitCount();
 
     public long toBits();
 
+    public String toString(LpcQuantization quantization);
+
     public default long toReversedBits()
     {
         return Long.reverse(toBits()) >>> (64 - bitCount());
     }
+
+    public LpcFrame clone();
 }
