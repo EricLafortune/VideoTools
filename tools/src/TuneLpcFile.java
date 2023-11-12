@@ -101,7 +101,7 @@ public class TuneLpcFile
                     lpcFrameInputStream.skipFrames(inputLpcStartFrame);
                     sndCommandInputStream.skipFrames(inputSndStartFrame);
 
-                    int currentSoundFrequency = 0;
+                    int currentSoundFrequency = (int)minFrequency;
 
                     int inputLpcFrameIndex = inputLpcStartFrame;
                     int inputSndFrameIndex = inputSndStartFrame;
