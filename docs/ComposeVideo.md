@@ -35,12 +35,12 @@ where:
 
 The options are:
 
-|         |                                                                   |
-|---------|-------------------------------------------------------------------|
-| `-60Hz` | Target a US system with a display refresh of 60 Hz (the default). |
-| `-50Hz` | Target a European system with a display refresh of 50 Hz.         |
+|         |                                                                                            |
+|---------|--------------------------------------------------------------------------------------------|
+| `-ntsc` | Target a US system with a display refresh of 60 Hz (actually: 59.922738 Hz) (the default). |
+| `-pal`  | Target a European system with a display refresh of 50 Hz (actually: 50.158969 Hz).         |
  
-These options are only relevant for properly synchronizing the speech 
+These options are only relevant for properly synchronizing the speech
 bitstream, which is always fixed at 40 fps.
 
 ## Example workflow

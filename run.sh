@@ -3,7 +3,6 @@
 # This script launches Mame with the TI-99/4A, the speech synthesizer, and
 # the demo video cartridge mounted.
 
-
 RPK=player/out/video.rpk
 
 if [ ! -f $RPK ]

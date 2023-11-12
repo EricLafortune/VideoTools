@@ -30,15 +30,15 @@ import java.util.*;
  * sound files (.vgm, .snd), and speech files (.lpc) in a single file (.tms).
  *
  * Usage:
- *     java ComposeVideo [-50Hz|-60Hz] [offset:]input.{zip|vgm|snd|lpc}[,skip] ... output.tms
+ *     java ComposeVideo [-ntsc|-pal] [offset:]input.{zip|vgm|snd|lpc}[,skip] ... output.tms
  *
  * where
- *     -50Hz  specifies a European target system with a display refresh of
- *            50 Hz (only for properly synchronizing the speech bitstream,
- *            fixed at 40 fps).
- *     -60Hz  specifies a US target system with a display refresh of
- *            60 Hz (only for properly synchronizing the speech bitstream,
- *            fixed at 40 fps).
+ *     -ntsc  specifies a US target system with a display refresh of
+ *            60 Hz (actually: 59.922738 Hz) (the default) (only for properly
+ *            synchronizing the speech bitstream, fixed at 40 fps).
+ *     -pal   specifies a European target system with a display refresh of
+ *            50 Hz (actually: 50.158969 Hz) (only for properly synchronizing
+ *            the speech bitstream, fixed at 40 fps).
  *     offset is the start frame (50 Hz) of the input file in the output.
  *     skip   is the number of leading frames to skip in the input file.
  *
@@ -53,6 +53,18 @@ public class ComposeVideo
 {
     private static final int BANK_SIZE = 8 * 1024;
 
+    // We'll tweak the assumed video frequencies slightly to reduce the risk
+    // of feeding the speech buffer too slowly, eventually underflowing it,
+    // e.g. due to complex animations and missed Vsyncs. The speech synthesizer
+    // temporarily halts the CPU if the CPU tries to overflow the speech buffer
+    // (no big problem), but it exits the SPEAK_EXTERNAL mode if the speech
+    // buffer underflows (leading to garbled speech).
+    private static final double EPSILON = 0.01;
+
+    private static final double NTSC_FREQUENCY = 59.922738 - EPSILON;
+    private static final double PAL_FREQUENCY  = 50.158969 - EPSILON;
+    private static final double LPC_FREQUENCY  = 40.0;
+
 
     public static void main(String[] args)
     throws IOException
@@ -60,19 +72,21 @@ public class ComposeVideo
         // Parse any options.
         int argIndex = 0;
 
-        // Skip 1 in 3 vsyncs when filling the speech buffer.
-        int lpcStreamSkipRate = 3;
+        // We'll fill the speech buffer at 40 Hz.
+        double videoFrequency = NTSC_FREQUENCY;
 
-        if (args[argIndex].equals("-50Hz"))
+        if (args[argIndex].equals("-pal") ||
+            args[argIndex].equals("-50Hz"))
         {
-            // PAL system at 50 Hz (Europe).
-            lpcStreamSkipRate = 5;
+            // PAL system at ~50 Hz (Europe).
+            videoFrequency = PAL_FREQUENCY;
             argIndex++;
         }
-        else if (args[argIndex].equals("-60Hz"))
+        else if (args[argIndex].equals("-ntsc") ||
+                 args[argIndex].equals("-60Hz"))
         {
-            // NTSC system at 60 Hz (US).
-            lpcStreamSkipRate = 3;
+            // NTSC system at ~60 Hz (US).
+            videoFrequency = NTSC_FREQUENCY;
             argIndex++;
         }
 
@@ -210,6 +224,22 @@ public class ComposeVideo
                             true);
 
                         lpcInputStream.skipFrames(skipCount);
+
+                        // Already start filling the 16-byte speech buffer
+                        // with up to 7 bytes of speech data, so we reduce
+                        // the risk of a buffer underflow.
+                        byte[] speechData = lpcInputStream.readFrame();
+                        if (speechData != null)
+                        {
+                            videoOutputStream.writeSpeechData(speechData);
+
+                            speechFrameCount++;
+                        }
+                        else
+                        {
+                            lpcInputStream.close();
+                            lpcInputStream = null;
+                        }
                     }
 
                     inputFileIndex++;
@@ -265,7 +295,7 @@ public class ComposeVideo
 
                 // Write the speech data (at 40 fps).
                 if (lpcInputStream != null &&
-                    videoOutputStream.getVsyncCount() % lpcStreamSkipRate != 0)
+                    readyForLpcFrame(videoFrequency, videoOutputStream))
                 {
                     byte[] speechData = lpcInputStream.readFrame();
                     if (speechData != null)
@@ -395,6 +425,17 @@ public class ComposeVideo
         {
             throw new IllegalArgumentException("Unknown type of output file ["+outputFileName+"]");
         }
+    }
+
+
+    private static boolean readyForLpcFrame(double            videoFrequency,
+                                            VideoOutputStream videoOutputStream)
+    {
+        int vsyncCount = videoOutputStream.getVsyncCount();
+
+        // Was the previous Vsync in a different speech frame?
+        return (int)((vsyncCount-1) / videoFrequency * LPC_FREQUENCY + 1.0) !=
+               (int)( vsyncCount    / videoFrequency * LPC_FREQUENCY + 1.0);
     }
 
 
