@@ -167,15 +167,17 @@ frame_loop
                                ; Write the pre-swapped VDP address.
     movb *r1+, *r_vdpwa        ;: d-
 
-    mov  r2, r3                ; Inbetween: compute the branch offset into the
-    andi r3, >0007             ; unrolled loop.
-    sla  r3, 1
-    neg  r3
+    dec  r2                    ; Adjust the byte count from [1...] to [0...].
+
+    mov  r2, r3                ; Compute the branch offset into the unrolled loop.
+    andi r3, >0007             ; Mask to [0..7].
+    inv  r3                    ; Invert to [-1..-8].
+    sla  r3, 1                 ; Scale to [-2..-16] (words).
+
+    srl  r2, 3                 ; Scale the loop count [0...].
 
     movb *r1+, *r_vdpwa        ;: d-
 
-    srl  r2, 3                 ; Compute the unrolled loop count.
-    inc  r2
     b @unrolled_video_loop_end(r3)
 
 unrolled_video_loop            ; Copy the data to VDP RAM.
@@ -189,7 +191,7 @@ unrolled_video_loop            ; Copy the data to VDP RAM.
     .vdpwd *r1+                ;: d-
 unrolled_video_loop_end
     dec  r2
-    jne  unrolled_video_loop
+    joc  unrolled_video_loop   ; Stop when the counter goes negative.
     jmp  frame_loop
 
 check_sound_chunk
