@@ -1,6 +1,6 @@
 * Useful assembly definitions for the TI-99/4A home computer.
 *
-* Copyright (c) 2021-2022 Eric Lafortune
+* Copyright (c) 2021-2024 Eric Lafortune
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the Free
@@ -17,11 +17,10 @@
 * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 ******************************************************************************
-* Definitions and macros for accessing sound and speech.
+* Definitions and macros for accessing the sound processor.
 *
-* Programming them is documented in
+* Programming it is documented in
 *     http://www.unige.ch/medecine/nouspikel/ti99/tms9919.htm
-*     http://www.unige.ch/medecine/nouspikel/ti99/speech.htm
 ******************************************************************************
 
 * Frequency dividers for a well-tempered keyboard.
@@ -107,10 +106,6 @@ white_noise    equ 1
 * Sound address.
 sound  equ  >8400
 
-* Speech addresses.
-spchrd equ  >9000
-spchwt equ  >9400
-
 * Macro: append the bytes of sound data for the specified tone frequency.
 * IN #1: the tone generator (0..2).
 * IN #2: the frequency divider (1..1023 for high to low).
@@ -152,20 +147,21 @@ spchwt equ  >9400
     .endm
 
 
+* Macro: cache the sound address in the given register, to automatically get
+*        more compact sound macro calls later on.
+* IN #1:  the register number.
+* OUT #1: the sound address.
+    .defm sound_in_register
+r_sound equ #1
+    li   r_sound, sound
+    .endm
+
 * Macro: write the given value to the sound generator.
 * IN #1: the source.
     .defm sound
+    .ifdef r_sound
+    movb #1, *r_sound
+    .else
     movb #1, @sound
-    .endm
-
-* Macro: read a value from the speech synthesizer.
-* OUT #1: the destination.
-    .defm spchrd
-    movb @spchrd, #1
-    .endm
-
-* Macro: write the given value to the speech synthesizer.
-* IN #1: the source.
-    .defm spchwt
-    movb #1, @spchwt
+    .endif
     .endm

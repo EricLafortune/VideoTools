@@ -1,6 +1,6 @@
 * Video player for the TI-99/4A home computer.
 *
-* Copyright (c) 2022 Eric Lafortune
+* Copyright (c) 2022-2024 Eric Lafortune
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the Free
@@ -16,7 +16,25 @@
 * with this program; if not, write to the Free Software Foundation, Inc.,
 * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-    aorg >6000
+    copy "include/colors.asm"
+    copy "include/cpu.asm"
+    copy "include/vdp.asm"
+    copy "include/sound.asm"
+    copy "include/speech.asm"
+    copy "include/cru.asm"
+
+* A single workspace at the end of scratch-pad RAM.
+workspace equ scratchpad_end - workspace_size
+
+* Locations of the various graphics tables in VDP memory.
+pattern_descriptor_table equ >0000 ; Size >1800.
+color_table              equ >2000 ; Size >1800.
+screen_image_table       equ >1800 ; Size >0300.
+sprite_attribute_table   equ >3800 ; Size >0080.
+sprite_descriptor_table  equ >0000 ; Size >0800.
+
+* Start in module ROM/RAM.
+    aorg module_memory
 
 * Module header.
     byte >aa                   ; Header.
@@ -40,176 +58,175 @@ program_list
     stri 'VIDEO'               ; Program name.
     even
 
-    copy "include/colors.asm"
-    copy "include/vdp.asm"
-    copy "include/sound.asm"
-    copy "include/cru.asm"
-
 play_without_speech
     limi 0
-    lwpi >83e0
+    lwpi workspace
 
-    clr  r11                   ; Cache a dummy speech address in r11.
+    clr  r10                   ; Cache a dummy speech address.
     jmp  !
 
 play_with_speech
     limi 0
-    lwpi >83e0
+    lwpi workspace
 
-    li   r11, spchwt           ; Cache the speech address in r11.
-!   li   r13, sound            ; Cache the sound address in r13.
-    li   r14, vdpwd            ; Cache the vdpwd address in r14.
-    .vdpwa_in_register r15     ; Cache the vdpwa address in r15.
+    .spchwt_in_register r10    ; Cache the speech address.
+!   .sound_in_register  r11    ; Cache the sound address.
+    .vdpwa_in_register  r13    ; Cache the vdpwa address.
+    .vdpwd_in_register  r14    ; Cache the vdpwd address.
+    .vdpsta_in_register r15    ; Cache the vdpsta address.
 
-    .vdpwr 0, >02              ; Bitmap mode.
-    .vdpwr 1, >c0              ; Disable screen interrupts.
-    .vdpwr 2, >06              ; Set the screen image table       at >1800.
-    .vdpwr 3, >ff              ; Set the color table              at >2000 (size >1800).
-    .vdpwr 4, >03              ; Set the pattern descriptor table at >0000 (size >1800).
-    .vdpwr 5, >70              ; Set the sprite attribute list    at >3800.
-;   .vdpwr 6, >00              ; Keep the sprite descriptor table at >0000.
-    .vdpwr 7, black            ; Set the background color.
+    .vdpwr_mode                     bitmap_mode
+    .vdpwr_flags                    vdp16k | display_enable | interrupt_enable
+    .vdpwr_pattern_descriptor_table pattern_descriptor_table, bitmap_mode
+    .vdpwr_color_table              color_table, bitmap_mode
+    .vdpwr_screen_image_table       screen_image_table
+    .vdpwr_sprite_attribute_table   sprite_attribute_table
+    .vdpwr_sprite_descriptor_table  sprite_descriptor_table
+    .vdpwr_background_color         black
 
 * Initialize the pattern descriptor table and screen image table.
-    li   r0, >4000
-    .vdpwa r0
+    .vdpwa pattern_descriptor_table | vdp_write_bit
     clr  r0
-    li   r1, >1800 + >0300
+    li   r1, bitmap_pattern_descriptor_table_size + screen_image_table_size
 pattern_loop
     .vdpwd r0
     dec  r1
     jne  pattern_loop
 
 * Initialize the color table.
-    li   r0, >6000
-    .vdpwa r0
-    li   r0, (white * 16 + black) * 256
-    li   r1, >1800
+    .vdpwa    color_table | vdp_write_bit
+    .li_color r0, white, black
+    li        r1, bitmap_color_table_size
 color_loop
     .vdpwd r0
     dec  r1
     jne  color_loop
 
 * Initialize the sprite attribute table.
-    li   r0, >7800
-    .vdpwa r0
-    li   r0, >d000
+    .vdpwa sprite_attribute_table | vdp_write_bit
+    li     r0, sprite_attribute_table_terminator * 256
     .vdpwd r0
 
 * Copy the player code to scratchpad RAM and run it.
     li   r0, code_start
-    li   r1, >8300
+    li   r1, scratchpad
 copy_loop
     mov  *r0+, *r1+
     ci   r0, code_end
     jne  copy_loop
- clr r10
-    b    @>8300
+
+    b    @scratchpad
 
 code_start
-    xorg >8300
+    xorg scratchpad
 
 * Main loop that draws all frames, in scratchpad RAM for speed.
 * Registers:
 *   r0:  Current adress to set the module memory bank: >6000, >6002,...,>7ffe.
-*   r1:  Data pointer in the current memory bank, starting at >60000.
+*   r1:  Data pointer in the current memory bank, starting at >6000.
 *   r2:  Command and count.
-*   r11: SPCHWT.
-*   r13: SOUND.
-*   r14: VDPWD.
-*   r15: VDPWA.
+*   r10: SPCHWT constant.
+*   r11: SOUND constant.
+*   r12: CRU base.
+*   r13: VDPWD constant.
+*   r14: VDPWA constant.
+*   r15: VDPSTA constant.
 movie_loop
-    li   r0, >6002             ; Set the first bank.
+    li   r0, module_bank_selection + module_bank_increment ; Set the first animation bank.
 
 * Switch to the current bank and update the number.
 bank_loop
-    movb *r0, *r0              ; Switch to the current bank.
+    .switch_bank *r0           ; Switch to the current bank.
     inct r0                    ; Increment the bank index.
 
-    li   r1, >6000             ; Set the first frame.
+    li   r1, module_memory     ; Set the first frame.
 
 * Stream a chunk (video, sound, or speech).
 frame_loop
-    movb *r1+, r2
+    movb *r1+, r2              ; Get the pre-swapped command/count.
     swpb r2
     movb *r1+, r2
-    jlt  !
+    jlt  check_sound_chunk
 
 * Stream a chunk of video data.
 
 ; Simple version without loop unrolling.
 ;                               ; Write the pre-swapped VDP address.
-;    movb *r1+, *r15            ;: d-
+;    movb *r1+, *r_vdpwa        ;: d-
 ;    nop
-;    movb *r1+, *r15            ;: d-
+;    movb *r1+, *r_vdpwa        ;: d-
 ;    nop
 ;
-;video_loop                     ; Copy the video to VDP RAM.
-;    movb *r1+, *r14            ;: d-
+;video_loop                     ; Copy the data to VDP RAM.
+;    movb *r1+, *r_vdpwd        ;: d-
 ;    dec  r2
 ;    jne  video_loop
 ;    jmp  frame_loop
 
 ; Faster version with loop unrolling.
                                ; Write the pre-swapped VDP address.
-    movb *r1+, *r15            ;: d-
+    movb *r1+, *r_vdpwa        ;: d-
+
     mov  r2, r3                ; Inbetween: compute the branch offset into the
     andi r3, >0007             ; unrolled loop.
     sla  r3, 1
     neg  r3
-    movb *r1+, *r15            ;: d-
-    srl  r2, 3
+
+    movb *r1+, *r_vdpwa        ;: d-
+
+    srl  r2, 3                 ; Compute the unrolled loop count.
     inc  r2
     b @unrolled_video_loop_end(r3)
 
-unrolled_video_loop            ; Copy the video to VDP RAM.
-    movb *r1+, *r14            ;: d-
-    movb *r1+, *r14            ;: d-
-    movb *r1+, *r14            ;: d-
-    movb *r1+, *r14            ;: d-
-    movb *r1+, *r14            ;: d-
-    movb *r1+, *r14            ;: d-
-    movb *r1+, *r14            ;: d-
-    movb *r1+, *r14            ;: d-
+unrolled_video_loop            ; Copy the data to VDP RAM.
+    .vdpwd *r1+                ;: d-
+    .vdpwd *r1+                ;: d-
+    .vdpwd *r1+                ;: d-
+    .vdpwd *r1+                ;: d-
+    .vdpwd *r1+                ;: d-
+    .vdpwd *r1+                ;: d-
+    .vdpwd *r1+                ;: d-
+    .vdpwd *r1+                ;: d-
 unrolled_video_loop_end
     dec  r2
     jne  unrolled_video_loop
     jmp  frame_loop
 
-!   ai   r2, >0020             ; Did we get a sound chunk?
-    jlt  !
+check_sound_chunk
+    ai   r2, >0020             ; Did we get a sound chunk?
+    jlt  check_speech_chunk
 
 * Stream a chunk of sound data.
-sound_loop                     ; Copy the video to the sound processor.
-    movb *r1+, *r13            ;: d-
+sound_loop                     ; Copy the data to the sound processor.
+    .sound *r1+                ;: d-
     dec  r2
     jne  sound_loop
     jmp  frame_loop            ; Continue with the rest of the frame.
 
-!   ai   r2, >0010             ; Did we get a speech video?
-    jlt  !
+check_speech_chunk
+    ai   r2, >0010             ; Did we get a speech video?
+    jlt  check_vsync_marker
 
 * Stream a chunk of speech data.
-speech_loop                    ; Copy the video to the speech synthesizer.
-    movb *r1+, *r11            ;: d-
+speech_loop                    ; Copy the data to the speech synthesizer.
+    .spchwt *r1+               ;: d-
     dec  r2
     jne  speech_loop
     jmp  frame_loop            ; Continue with the rest of the frame.
 
-!   inc  r2                    ; Did we get a VSYNC marker?
-    jne  !
+check_vsync_marker
+    inc  r2                    ; Did we get a VSYNC marker?
+    jne  check_next_bank_marker
 
 * Wait for VSYNC.
-vsync_loop
-    movb @vdpsta, r3           ; Check the VDP status byte.
-    sla  r3, 1
-    jnc  vsync_loop
+    .wait_for_vsync
     jmp  frame_loop            ; Continue with the rest of the frame.
 
-!   inc  r2                    ; Did we get a NEXT_BANK marker?
-    jeq  bank_loop
+check_next_bank_marker
+    inc  r2                    ; Did we get a NEXT_BANK marker?
+    jeq  bank_loop             ; Then continue with the next bank.
 
-                               ; We got an EOF marker.
+                               ; Otherwise we got an EOF marker.
 * Wait for a key press (in key column 0).
     li   r12, cru_write_keyboard_column
     clr  r0
@@ -221,22 +238,21 @@ key_press_loop
     ci   r0, >ff00
     jeq  key_press_loop
 
-    li   r0, >6000             ; Reset to the first bank.
-    movb *r0, *r0
+    .switch_bank @module_bank_selection ; Reset to the first bank.
 
-    blwp @0                    ; Return to the title screen.
+    blwp @reset_vector         ; Return to the title screen.
 
-    .ifgt  $, >83e0
-    .error 'Code block too large'
+    .ifgt  $, workspace
+    .error 'Scratch-pad code block too large'
     .endif
 
     aorg
 code_end
 
-    .ifgt  $, >8000
+    .ifgt  $, module_memory_end
     .error 'Cartridge code too large'
     .endif
 
-    aorg >8000
+    aorg module_memory_end
     ;copy "../data/video.asm"
     bcopy "../data/video.tms"
