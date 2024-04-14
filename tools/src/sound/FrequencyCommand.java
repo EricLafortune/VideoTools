@@ -22,7 +22,8 @@ package sound;
 /**
  * This SoundCommand represents a frequency command. The frequency is
  * represented in its encoded integer form. For tones, the corresponding
- * frequency in Herz is 111860.8 / frequency Hz.
+ * frequency in Herz is 111860.8 / frequency (on a system with a 4 MHz
+ * clock, such as the TI-99/4A).
  */
 public class FrequencyCommand
 extends      SoundCommand

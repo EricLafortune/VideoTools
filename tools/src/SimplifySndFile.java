@@ -18,14 +18,17 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 import sound.*;
+import speech.LpcQuantization;
 
 import java.io.*;
 import java.util.*;
 
 /**
  * This utility simplifies a file in our custom Sound (.snd) format,
- * optimized for the the TMS9919 / SN76489 sound processor.
- * .
+ * optimized for the TMS9919 / SN76489 sound processor.
+ *
+ * Usage:
+ *     java SimplifySndFile [-addsilencecommands] input.snd output.snd
  */
 public class SimplifySndFile
 {
@@ -35,22 +38,36 @@ public class SimplifySndFile
         int argIndex = 0;
 
         boolean addSilenceCommands = false;
-        if (args[argIndex].equals("-addsilencecommands"))
+        while (true)
         {
-            addSilenceCommands = true;
+            String arg = args[argIndex];
+            if (!arg.startsWith("-"))
+            {
+                break;
+            }
+
             argIndex++;
+
+            switch (arg)
+            {
+                case "-addsilencecommands" -> addSilenceCommands = true;
+                default -> throw new IllegalArgumentException("Unknown option [" + arg + "]");
+            }
         }
+
+        String inputFileName  = args[argIndex++];
+        String outputFileName = args[argIndex++];
 
         try (SndCommandInputStream sndCommandInputStream =
                  new SndCommandInputStream(
                  new BufferedInputStream(
-                 new FileInputStream(args[argIndex++])),
+                 new FileInputStream(inputFileName)),
                  addSilenceCommands))
         {
             try (SndCommandOutputStream sndCommandOutputStream =
                      new SndCommandOutputStream(
                      new BufferedOutputStream(
-                     new FileOutputStream(args[argIndex++]))))
+                     new FileOutputStream(outputFileName))))
             {
                 FrequencyCommand[] activeFrequencies = new FrequencyCommand[4];
                 VolumeCommand[]    activeVolumes     = new VolumeCommand[4];
@@ -65,14 +82,11 @@ public class SimplifySndFile
 
                     // Collect all commands in structured arrays, overwriting
                     // any earlier commands of the same generator and type.
-                    FrequencyCommand[] frameFrequencies = new FrequencyCommand[4];
-                    VolumeCommand[]    frameVolumes     = new VolumeCommand[4];
+                    FrequencyCommand[] newFrequencies = new FrequencyCommand[4];
+                    VolumeCommand[]    newVolumes     = new VolumeCommand[4];
 
-                    FrequencyCommand[] resultingFrequencies = new FrequencyCommand[4];
-                    VolumeCommand[]    resultingVolumes     = new VolumeCommand[4];
-
-                    System.arraycopy(activeFrequencies, 0, resultingFrequencies, 0, 4);
-                    System.arraycopy(activeVolumes,     0, resultingVolumes,     0, 4);
+                    System.arraycopy(activeFrequencies, 0, newFrequencies, 0, 4);
+                    System.arraycopy(activeVolumes,     0, newVolumes,     0, 4);
 
                     for (int index = 0; index < commands.length; index++)
                     {
@@ -80,14 +94,12 @@ public class SimplifySndFile
 
                         if (command.type() == SoundCommand.TYPE_FREQUENCY)
                         {
-                            frameFrequencies[command.generator-1]     =
-                            resultingFrequencies[command.generator-1] =
+                            newFrequencies[command.generator-1] =
                                 (FrequencyCommand)command;
                         }
                         else
                         {
-                            frameVolumes[command.generator-1]     =
-                            resultingVolumes[command.generator-1] =
+                            newVolumes[command.generator-1] =
                                 (VolumeCommand)command;
                         }
                     }
@@ -96,22 +108,22 @@ public class SimplifySndFile
                     ArrayList<SoundCommand> simplifiedCommandList =
                         new ArrayList<>(commands.length);
 
-                    FrequencyCommand noiseFrequency = resultingFrequencies[SoundCommand.NOISE - 1];
-                    VolumeCommand    noiseVolume    = resultingVolumes[SoundCommand.NOISE - 1];
+                    FrequencyCommand noiseFrequency = newFrequencies[SoundCommand.NOISE - 1];
+                    VolumeCommand    noiseVolume    = newVolumes[SoundCommand.NOISE - 1];
 
                     // Loop over all generators.
                     for (int generatorIndex = 0; generatorIndex < 4; generatorIndex++)
                     {
-                        FrequencyCommand frameFrequency = frameFrequencies[generatorIndex];
-                        VolumeCommand    frameVolume    = frameVolumes[generatorIndex];
+                        FrequencyCommand newFrequency = newFrequencies[generatorIndex];
+                        VolumeCommand    newVolume    = newVolumes[generatorIndex];
 
                         // Write the frequency, if the generator is active.
                         if (// Is the frequency different from before?
-                            frameFrequency != null &&
-                            !frameFrequency.equals(activeFrequencies[generatorIndex]) &&
+                            newFrequency != null &&
+                            !newFrequency.equals(activeFrequencies[generatorIndex]) &&
                             (// Is the generator active?
-                             (resultingVolumes[generatorIndex] != null &&
-                              resultingVolumes[generatorIndex].volume != VolumeCommand.SILENT) ||
+                             (newVolume != null &&
+                              newVolume.volume != VolumeCommand.SILENT) ||
                              // Is it generator 3 and is the noise generator
                              // actively following it?
                              (generatorIndex+1               == SoundCommand.TONE3   &&
@@ -120,21 +132,21 @@ public class SimplifySndFile
                               noiseFrequency                 != null                 &&
                               (noiseFrequency.frequency & 3) == 3)))
                         {
-                            simplifiedCommandList.add(frameFrequency);
+                            simplifiedCommandList.add(newFrequency);
                         }
 
                         // Write the volume, if it has changed.
                         if (// Is the volume different from before?
-                            frameVolume != null &&
-                            !frameVolume.equals(activeVolumes[generatorIndex]))
+                            newVolume != null &&
+                            !newVolume.equals(activeVolumes[generatorIndex]))
                         {
-                            simplifiedCommandList.add(frameVolume);
+                            simplifiedCommandList.add(newVolume);
                         }
                     }
 
                     // Update the active state.
-                    activeFrequencies = resultingFrequencies;
-                    activeVolumes     = resultingVolumes;;
+                    activeFrequencies = newFrequencies;
+                    activeVolumes     = newVolumes;
 
                     // Write the simplified commands to the output.
                     SoundCommand[] simplifiedCommands =
