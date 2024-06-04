@@ -66,6 +66,8 @@ is fixed at 60 fps on US systems and 50 fps on European systems.
 * [CutSndFile](docs/CutSndFile.md): copy a section from an SND file.
 * [SimplifySndFile](docs/SimplifySndFile.md): simplify the sound commands in an
   SND file.
+* [TransposeSndFile](docs/TransposeSndFile.md): transpose the frequencies in an
+  SND file.
 
 ### Preparing speech
 
