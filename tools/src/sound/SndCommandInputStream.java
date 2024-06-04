@@ -35,9 +35,9 @@ implements   AutoCloseable
 {
     private static final SoundCommand[] SILENCE_COMMANDS = new SoundCommand[]
     {
+        new VolumeCommand(SoundCommand.TONE0, VolumeCommand.SILENT),
         new VolumeCommand(SoundCommand.TONE1, VolumeCommand.SILENT),
         new VolumeCommand(SoundCommand.TONE2, VolumeCommand.SILENT),
-        new VolumeCommand(SoundCommand.TONE3, VolumeCommand.SILENT),
         new VolumeCommand(SoundCommand.NOISE, VolumeCommand.SILENT),
     };
 

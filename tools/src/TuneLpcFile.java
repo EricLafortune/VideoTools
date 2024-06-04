@@ -24,7 +24,7 @@ import java.io.*;
 
 /**
  * This utility tunes a given speech file (.lpc) for the TMS5200 speech
- * synthesizer, based on the frequencies of generator 1 in a given Sound
+ * synthesizer, based on the frequencies of generator 0 in a given Sound
  * file (.snd).
  *
  * Usage:
@@ -152,7 +152,7 @@ public class TuneLpcFile
 
 
     /**
-     * Extracts the sound frequency of Tone1 from the given sound commands,
+     * Extracts the sound frequency of Tone0 from the given sound commands,
      * if specified, or returns the given default sound frequency otherwise.
      */
     private static int soundFrequency(SoundCommand[] soundCommands,
@@ -165,9 +165,9 @@ public class TuneLpcFile
             {
                 FrequencyCommand frequencyCommand = (FrequencyCommand)soundCommand;
 
-                if (frequencyCommand.generator == FrequencyCommand.TONE1)
+                if (frequencyCommand.generator == FrequencyCommand.TONE0)
                 {
-                    soundFrequency = frequencyCommand.frequency;
+                    soundFrequency = frequencyCommand.divider;
 
                     if (DEBUG)
                     {

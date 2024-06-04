@@ -28,23 +28,29 @@ extends      SoundCommand
 {
     public static final int SILENT = 0xf;
 
-    static final int TONE1_VOLUME = 0x90;
-    static final int TONE2_VOLUME = 0xb0;
-    static final int TONE3_VOLUME = 0xd0;
+    static final int TONE0_VOLUME = 0x90;
+    static final int TONE1_VOLUME = 0xb0;
+    static final int TONE2_VOLUME = 0xd0;
     static final int NOISE_VOLUME = 0xf0;
 
 
-    public int volume;
+    public int attenuation;
 
 
     /**
-     * Creates a new instance with the given generator and volume.
+     * Creates a new instance with the given generator and volume attenuation.
      */
-    public VolumeCommand(int generator, int volume)
+    public VolumeCommand(int generator, int attenuation)
     {
         super(generator);
 
-        this.volume = volume;
+        this.attenuation = attenuation;
+    }
+
+
+    public boolean isSilent()
+    {
+        return attenuation == SILENT;
     }
 
 
@@ -59,7 +65,7 @@ extends      SoundCommand
     public byte[] toBytes()
     {
         return
-            new byte[] { (byte)(TONE1_VOLUME | (generator-TONE1 << 5) | volume) };
+            new byte[] { (byte)(TONE0_VOLUME | (generator-TONE0 << 5) | attenuation) };
     }
 
 
@@ -74,12 +80,12 @@ extends      SoundCommand
 
         VolumeCommand other = (VolumeCommand)o;
 
-        return this.volume == other.volume;
+        return this.attenuation == other.attenuation;
     }
 
 
     public String toString()
     {
-        return String.format("Volume(%s, volume=0x%1x)", generatorName(), volume);
+        return String.format("Volume(%s, attenuation=0x%1x)", generatorName(), attenuation);
     }
 }

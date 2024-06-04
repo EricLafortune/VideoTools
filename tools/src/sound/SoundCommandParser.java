@@ -49,12 +49,12 @@ class SoundCommandParser
             int commandNibble = b & 0xf0;
             switch (commandNibble)
             {
+                case TONE0_FREQUENCY:
                 case TONE1_FREQUENCY:
                 case TONE2_FREQUENCY:
-                case TONE3_FREQUENCY:
                 {
-                    int generator = ((commandNibble - TONE1_FREQUENCY) >>> 5) + SoundCommand.TONE1;
-                    int frequency = ((soundData[index++] & 0xff) << 4) | (b & 0x0f);
+                    int generator = ((commandNibble - TONE0_FREQUENCY) >>> 5) + SoundCommand.TONE0;
+                    int frequency = ((soundData[index++] & 0x3f) << 4) | (b & 0x0f);
 
                     soundCommand = new FrequencyCommand(generator, frequency);
                     break;
@@ -67,12 +67,12 @@ class SoundCommandParser
                     soundCommand = new FrequencyCommand(generator, frequency);
                     break;
                 }
+                case TONE0_VOLUME:
                 case TONE1_VOLUME:
                 case TONE2_VOLUME:
-                case TONE3_VOLUME:
                 case NOISE_VOLUME:
                 {
-                    int generator = ((commandNibble - TONE1_VOLUME) >>> 5) + SoundCommand.TONE1;
+                    int generator = ((commandNibble - TONE0_VOLUME) >>> 5) + SoundCommand.TONE0;
                     int volume    = b & 0x0f;
 
                     soundCommand = new VolumeCommand(generator, volume);

@@ -75,7 +75,7 @@ public class Convert50HzVgmTo60HzSnd
                             SoundCommand command = commands[splitIndex];
 
                             if (splitIndex > 1 &&
-                                command.generator == SoundCommand.TONE2)
+                                command.generator == SoundCommand.TONE1)
                             {
                                 break;
                             }

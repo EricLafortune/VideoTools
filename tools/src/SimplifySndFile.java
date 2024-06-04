@@ -32,12 +32,18 @@ import java.util.*;
  */
 public class SimplifySndFile
 {
+    private static final boolean DEBUG = false;
+
+
     public static void main(String[] args)
     throws IOException
     {
+        // Parse the options.
         int argIndex = 0;
 
         boolean addSilenceCommands = false;
+
+        // Process the input file.
         while (true)
         {
             String arg = args[argIndex];
@@ -69,77 +75,151 @@ public class SimplifySndFile
                      new BufferedOutputStream(
                      new FileOutputStream(outputFileName))))
             {
+                FrequencyCommand[] originalFrequencies = new FrequencyCommand[4];
+                VolumeCommand[]    originalVolumes     = new VolumeCommand[4];
+
                 FrequencyCommand[] activeFrequencies = new FrequencyCommand[4];
                 VolumeCommand[]    activeVolumes     = new VolumeCommand[4];
 
+                // Initialize all generators.
+                for (int generator = SoundCommand.TONE0;
+                     generator    <= SoundCommand.NOISE;
+                     generator++)
+                {
+                    originalFrequencies[generator] =
+                    activeFrequencies[generator] =
+                        new FrequencyCommand(generator, 0);
+
+                    originalVolumes[generator] =
+                    activeVolumes[generator] =
+                        new VolumeCommand(generator, VolumeCommand.SILENT);
+                }
+
+                // Process all sound frames.
                 while (true)
                 {
+                    // Read the commands of this frame.
                     SoundCommand[] commands = sndCommandInputStream.readFrame();
                     if (commands == null)
                     {
                         break;
                     }
 
-                    // Collect all commands in structured arrays, overwriting
-                    // any earlier commands of the same generator and type.
-                    FrequencyCommand[] newFrequencies = new FrequencyCommand[4];
-                    VolumeCommand[]    newVolumes     = new VolumeCommand[4];
-
-                    System.arraycopy(activeFrequencies, 0, newFrequencies, 0, 4);
-                    System.arraycopy(activeVolumes,     0, newVolumes,     0, 4);
-
+                    // Update the original state, based on the commands.
                     for (int index = 0; index < commands.length; index++)
                     {
                         SoundCommand command = commands[index];
 
                         if (command.type() == SoundCommand.TYPE_FREQUENCY)
                         {
-                            newFrequencies[command.generator-1] =
+                            originalFrequencies[command.generator] =
                                 (FrequencyCommand)command;
                         }
                         else
                         {
-                            newVolumes[command.generator-1] =
+                            originalVolumes[command.generator] =
                                 (VolumeCommand)command;
                         }
                     }
 
-                    // Start collecting all relevant commands.
+                    // Copy all commands into new arrays.
+                    FrequencyCommand[] newFrequencies = new FrequencyCommand[4];
+                    VolumeCommand[]    newVolumes     = new VolumeCommand[4];
+
+                    System.arraycopy(activeFrequencies, 0, newFrequencies, 0, 4);
+                    System.arraycopy(activeVolumes,     0, newVolumes,     0, 4);
+
+                    VolumeCommand noiseVolume = originalVolumes[SoundCommand.NOISE];
+
+                    // Copy all active frequencies.
+                    for (int generator = SoundCommand.TONE0;
+                         generator    <= SoundCommand.NOISE;
+                         generator++)
+                    {
+                        FrequencyCommand frequency = originalFrequencies[generator];
+                        VolumeCommand    volume    = originalVolumes[generator];
+
+                        // Is the generator active?
+                        if (!volume.isSilent() ||
+                            (frequency.isNoiseTuningTone() &&
+                             !noiseVolume.isSilent()))
+                        {
+                            // Copy the tone frequency.
+                            newFrequencies[generator] = frequency;
+                        }
+                    }
+
+                    // Copy all original volumes.
+                    System.arraycopy(originalVolumes, 0, newVolumes, 0, 4);
+
+                    if (DEBUG)
+                    {
+                        // Print out the original state.
+                        for (int generator = SoundCommand.TONE0;
+                             generator    <= SoundCommand.NOISE;
+                             generator++)
+                        {
+                            System.out.printf("%04x %1x ",
+                                              originalFrequencies[generator].divider,
+                                              originalVolumes[generator].attenuation);
+                        }
+                        System.out.print("   ");
+
+                        // Print out the changes of the new state.
+                        for (int generator = SoundCommand.TONE0;
+                             generator    <= SoundCommand.NOISE;
+                             generator++)
+                        {
+                            FrequencyCommand newFrequency = newFrequencies[generator];
+                            VolumeCommand    newVolume    = newVolumes[generator];
+
+                            // Has the frequency changed?
+                            if (!newFrequency.equals(activeFrequencies[generator]))
+                            {
+                                System.out.printf("%04x ", newFrequencies[generator].divider);
+                            }
+                            else
+                            {
+                                System.out.print(".... ");
+                            }
+
+                            // Has the volume changed?
+                            if (!newVolume.equals(activeVolumes[generator]))
+                            {
+                                System.out.printf("%1x ", newVolumes[generator].attenuation);
+                            }
+                            else
+                            {
+                                System.out.print(". ");
+                            }
+                        }
+                        System.out.println();
+                    }
+
+                    // Start collecting all changes between the active state
+                    // and the new state.
                     ArrayList<SoundCommand> simplifiedCommandList =
                         new ArrayList<>(commands.length);
 
-                    FrequencyCommand noiseFrequency = newFrequencies[SoundCommand.NOISE - 1];
-                    VolumeCommand    noiseVolume    = newVolumes[SoundCommand.NOISE - 1];
-
-                    // Loop over all generators.
-                    for (int generatorIndex = 0; generatorIndex < 4; generatorIndex++)
+                    // Collect the changed frequency and volume commands.
+                    for (int generator = SoundCommand.TONE0;
+                         generator    <= SoundCommand.NOISE;
+                         generator++)
                     {
-                        FrequencyCommand newFrequency = newFrequencies[generatorIndex];
-                        VolumeCommand    newVolume    = newVolumes[generatorIndex];
+                        FrequencyCommand newFrequency = newFrequencies[generator];
+                        VolumeCommand    newVolume    = newVolumes[generator];
 
-                        // Write the frequency, if the generator is active.
-                        if (// Is the frequency different from before?
-                            newFrequency != null &&
-                            !newFrequency.equals(activeFrequencies[generatorIndex]) &&
-                            (// Is the generator active?
-                             (newVolume != null &&
-                              newVolume.volume != VolumeCommand.SILENT) ||
-                             // Is it generator 3 and is the noise generator
-                             // actively following it?
-                             (generatorIndex+1               == SoundCommand.TONE3   &&
-                              noiseVolume                    != null                 &&
-                              noiseVolume.volume             != VolumeCommand.SILENT &&
-                              noiseFrequency                 != null                 &&
-                              (noiseFrequency.frequency & 3) == 3)))
+                        // Has the frequency changed?
+                        if (!newFrequency.equals(activeFrequencies[generator]))
                         {
+                            // Collect it.
                             simplifiedCommandList.add(newFrequency);
                         }
 
-                        // Write the volume, if it has changed.
-                        if (// Is the volume different from before?
-                            newVolume != null &&
-                            !newVolume.equals(activeVolumes[generatorIndex]))
+                        // Has the volume changed?
+                        if (!newVolume.equals(activeVolumes[generator]))
                         {
+                            // Collect it.
                             simplifiedCommandList.add(newVolume);
                         }
                     }

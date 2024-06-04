@@ -27,10 +27,10 @@ package sound;
  */
 public abstract class SoundCommand
 {
+    public static final int TONE0 = 0;
     public static final int TONE1 = 1;
     public static final int TONE2 = 2;
-    public static final int TONE3 = 3;
-    public static final int NOISE = 4;
+    public static final int NOISE = 3;
 
     public static final int TYPE_FREQUENCY = 0;
     public static final int TYPE_VOLUME    = 1;
@@ -45,6 +45,18 @@ public abstract class SoundCommand
     }
 
 
+    public boolean isNoiseTuningTone()
+    {
+        return generator == TONE2;
+    }
+
+
+    public boolean isNoise()
+    {
+        return generator == NOISE;
+    }
+
+
     public abstract int type();
 
 
@@ -52,9 +64,9 @@ public abstract class SoundCommand
     {
         switch (generator)
         {
+            case TONE0: return "Tone0";
             case TONE1: return "Tone1";
             case TONE2: return "Tone2";
-            case TONE3: return "Tone3";
             case NOISE: return "Noise";
             default:    return "Unknown";
         }

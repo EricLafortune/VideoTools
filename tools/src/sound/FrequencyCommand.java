@@ -28,23 +28,56 @@ package sound;
 public class FrequencyCommand
 extends      SoundCommand
 {
-    static final int TONE1_FREQUENCY = 0x80;
-    static final int TONE2_FREQUENCY = 0xa0;
-    static final int TONE3_FREQUENCY = 0xc0;
+    public static final int MIN_DIVIDER = 0x0001;
+    public static final int MAX_DIVIDER = 0x03ff;
+
+    static final int TONE0_FREQUENCY = 0x80;
+    static final int TONE1_FREQUENCY = 0xa0;
+    static final int TONE2_FREQUENCY = 0xc0;
     static final int NOISE_FREQUENCY = 0xe0;
 
 
-    public int frequency;
+    public int divider;
 
 
     /**
-     * Creates a new instance with the given generator and frequency.
+     * Creates a new instance with the given generator and frequency divider.
      */
-    public FrequencyCommand(int generator, int frequency)
+    public FrequencyCommand(int generator, int divider)
     {
         super(generator);
 
-        this.frequency = frequency;
+        this.divider = divider;
+    }
+
+
+    public boolean isPeriodicNoise()
+    {
+        return isNoise() && (divider & 4) == 0;
+    }
+
+
+    public boolean isWhiteNoise()
+    {
+        return isNoise() && (divider & 4) == 4;
+    }
+
+
+    public boolean isTunedNoise()
+    {
+        return isNoise() && (divider & 3) == 3;
+    }
+
+
+    public boolean isTunedPeriodicNoise()
+    {
+        return isNoise() && (divider & 7) == 3;
+    }
+
+
+    public boolean isTunedWhiteNoise()
+    {
+        return isNoise() && (divider & 7) == 7;
     }
 
 
@@ -59,9 +92,9 @@ extends      SoundCommand
     public byte[] toBytes()
     {
         return generator == NOISE ?
-            new byte[] { (byte)(NOISE_FREQUENCY | frequency) } :
-            new byte[] { (byte)(TONE1_FREQUENCY | (generator-TONE1 << 5) | frequency & 0x0f),
-                         (byte)(frequency >>> 4)};
+            new byte[] { (byte)(NOISE_FREQUENCY | divider) } :
+            new byte[] { (byte)(TONE0_FREQUENCY | (generator-TONE0 << 5) | divider & 0x0f),
+                         (byte)(divider >>> 4)};
     }
 
 
@@ -76,12 +109,12 @@ extends      SoundCommand
 
         FrequencyCommand other = (FrequencyCommand)o;
 
-        return this.frequency == other.frequency;
+        return this.divider == other.divider;
     }
 
 
     public String toString()
     {
-        return String.format("Frequency(%s, frequency=0x%03x)", generatorName(), frequency);
+        return String.format("Frequency(%s, divider=0x%03x)", generatorName(), divider);
     }
 }
