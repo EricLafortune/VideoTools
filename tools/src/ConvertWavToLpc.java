@@ -243,9 +243,10 @@ public class ConvertWavToLpc
                 // Compute and remember the corresponding autocorrelation, to
                 // distinguish between voiced speech and unvoiced speech later
                 // on.
-                double autoCorrelation =
-                    fft.autocorrelation(wavSamples, pitch) /
-                    fft.autocorrelation(wavSamples, 0);
+                double normalization = fft.autocorrelation(wavSamples, 0);
+
+                double autoCorrelation = normalization == 0 ? 0.0 :
+                    fft.autocorrelation(wavSamples, pitch) / normalization;
 
                 maxCorrelations = addValue(maxCorrelations,
                                            frameCounter,
