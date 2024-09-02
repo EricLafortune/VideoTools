@@ -44,6 +44,8 @@ implements   DisplayInputStream
     }
 
 
+    // Implementations for DisplayInputStream.
+
     public Display readFrame() throws IOException
     {
         // Can we get another frame?

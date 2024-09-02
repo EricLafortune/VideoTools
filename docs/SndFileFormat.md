@@ -7,7 +7,7 @@ The format specifies chunks of bytes to be streamed to the sound processor.
 
 The format is defined as a sequence of such chunks. Each chunk consists of a
 header of a single unsigned byte specifying the length, followed by the data,
-without further compression..
+without further compression.
 
 A sequence of chunks can represent sounds or music, typically at 50Hz or 60Hz.
 The video tools contain a tool to extract sound data from VGM music files. The

@@ -206,7 +206,7 @@ sound_loop                     ; Copy the data to the sound processor.
     jmp  frame_loop            ; Continue with the rest of the frame.
 
 check_speech_chunk
-    ai   r2, >0010             ; Did we get a speech video?
+    ai   r2, >0010             ; Did we get a speech chunk?
     jlt  check_vsync_marker
 
 * Stream a chunk of speech data.
