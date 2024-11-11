@@ -20,7 +20,7 @@
 package speech;
 
 /**
- * This LpcFrame represents a frame that has am energy.
+ * This LpcFrame represents a frame that has an energy.
  */
 public abstract class LpcEnergyFrame
 implements            LpcFrame

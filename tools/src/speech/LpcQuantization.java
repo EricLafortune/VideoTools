@@ -43,7 +43,7 @@ public enum LpcQuantization
             Constants.TI_INTERPOLATION),
 
     TMS5110A(4,
-            10,
+             10,
              4,
              5,
              Constants.TI_K_BIT_COUNTS,
@@ -326,6 +326,15 @@ public enum LpcQuantization
 
 
     /**
+     * Returns the encoded energy of silence.
+     */
+    public int silenceEnergy()
+    {
+        return 0;
+    }
+
+
+    /**
      * Returns the minimum encoded energy of a voiced or unvoiced frame.
      */
     public int minEncodedEnergy()
@@ -344,8 +353,18 @@ public enum LpcQuantization
 
 
     /**
-     * Quantizes and encodes the given energy as an integer,
-     * which can be used in an {@link LpcFrame}.
+     * Returns the  encoded energy of a stop frame.
+     */
+    public int stopEnergy()
+    {
+        return (1 << energyBitCount) - 1;
+    }
+
+
+    /**
+     * Quantizes and encodes the given energy as an integer, which
+     * can be used in an {@link LpcFrame}. Note that this must be an
+     * {@link LpcSilenceFrame} for energy 0.
      * @param energy the energy as a value between 0 and 1.
      */
     public int encodeEnergy(double energy)
@@ -508,7 +527,7 @@ public enum LpcQuantization
     }
 
 
-    private static double frequency(int pitch)
+    public double frequency(int pitch)
     {
         return 8000.0 / (pitch + 1);
     }

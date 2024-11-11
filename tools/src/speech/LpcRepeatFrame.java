@@ -46,15 +46,15 @@ implements   LpcFrame
     public long toBits()
     {
         return
-            (long)(energy << 7) |
-            (long)(    1L << 6) |
-            (long)( pitch     );
+            ((long)energy << 7) |
+            (          1L << 6) |
+            ((long) pitch     );
     }
 
 
     public String toString(LpcQuantization quantization)
     {
-        return String.format("Voiced(energy=%3d, pitch=%3d)",
+        return String.format("Repeat(energy=%3d, pitch=%3d)",
                              quantization.energyTable[energy],
                              quantization.pitchTable[pitch]);
     }

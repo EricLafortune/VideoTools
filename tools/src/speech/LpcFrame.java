@@ -21,7 +21,7 @@ package speech;
 
 /**
  * This interface represents a frame in Linear Predictive Coding
- * (LPC) format for the TMS5200 speech synthesizer.
+ * (LPC) format for the TMS52xx speech synthesizer.
  *
  * @see http://www.unige.ch/medecine/nouspikel/ti99/speech.htm
  */
