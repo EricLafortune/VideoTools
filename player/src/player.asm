@@ -48,14 +48,17 @@ sprite_descriptor_table  equ >0000 ; Size >0800.
 
 * First element of the program list.
 program_list
-    data !                     ; Next element.
-    data play_with_speech      ; Program start.
-    stri 'VIDEO WITH SPEECH'   ; Program name.
+    data !!                    ; Next element.
+    data play_without_speech   ; Program start.
+!   stri 'VIDEO WITHOUT SPEECH'; Program name.
+    bss  32 - $ + -!           ; Filler.
+    even
 
 * Second element of the program list.
 !   data 0                     ; Next element.
-    data play_without_speech   ; Program start.
-    stri 'VIDEO'               ; Program name.
+    data play_with_speech      ; Program start.
+!   stri 'VIDEO WITH SPEECH'   ; Program name.
+    bss  32 - $ + -!           ; Filler.
     even
 
 play_without_speech
@@ -106,6 +109,9 @@ color_loop
     .vdpwa sprite_attribute_table | vdp_write_bit
     li     r0, sprite_attribute_table_terminator * 256
     .vdpwd r0
+
+* We'll check keys in keyboard column 0.
+    .set_keyboard_column 0
 
 * Copy the player code to scratchpad RAM and run it.
     li   r0, code_start
@@ -220,6 +226,11 @@ check_vsync_marker
     inc  r2                    ; Did we get a VSYNC marker?
     jne  check_next_bank_marker
 
+* Check for a '=' key press.
+    clr  r12
+    .test_keyboard_row 0
+    jne  quit                  ; Then quit.
+
 * Wait for VSYNC.
     .wait_for_vsync
     jmp  frame_loop            ; Continue with the rest of the frame.
@@ -230,9 +241,7 @@ check_next_bank_marker
 
                                ; Otherwise we got an EOF marker.
 * Wait for a key press (in key column 0).
-    li   r12, cru_write_keyboard_column
     clr  r0
-    ldcr r0, cru_keyboard_column_bit_count
     li   r12, cru_read_keyboard_rows
 
 key_press_loop
@@ -240,6 +249,7 @@ key_press_loop
     ci   r0, >ff00
     jeq  key_press_loop
 
+quit
     .switch_bank @module_bank_selection ; Reset to the first bank.
 
     blwp @reset_vector         ; Return to the title screen.
@@ -255,6 +265,8 @@ code_end
     .error 'Cartridge code too large'
     .endif
 
+* Put the video data in subsequent banks after the code,
+* aligned to multiples of >2000.
     aorg module_memory_end
     ;copy "../data/video.asm"
     bcopy "../data/video.tms"
