@@ -1,0 +1,18 @@
+# Derived from "ME".
+
+3 2e 29a5372b33
+6 2d 4f00cac75f
+b 2d
+c 2b
+d 2a 5ef4a069ed
+d 2a
+c 2a
+b 2a
+b 2d
+b 2d
+a 2d
+a 2d 5ad060cfe4
+a 2d 5688493593
+8 2f 45e0f376c3
+6 2f 41a0f35293
+f

@@ -1,0 +1,11 @@
+# Derived from "GOOD".
+
+c 2d 465068f333
+e 26
+e 28 4d0b6b2937
+e 2a
+e 2a
+c 2a
+a 2a 358f52f170
+6 2b
+f

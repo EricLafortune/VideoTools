@@ -1,0 +1,11 @@
+# Derived from "LARGE".
+
+a 2c 358d6a756a
+b 2b 356b90192b
+d 2a 3d7576679c
+e 2a
+d 28 41955487a4
+c 28 3a35328964
+a 2a 3af4930564
+8 2a
+6 2a

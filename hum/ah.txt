@@ -1,0 +1,10 @@
+# Derived from "DATA".
+
+a 2f 39f34ef1dd
+c 30
+a 31 3af0cb1754
+8 32
+7 33
+6 31 45cd0c14d3
+3 2e 43b46a4ee4
+f

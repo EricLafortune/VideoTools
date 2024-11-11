@@ -1,0 +1,16 @@
+# Derived from "MOVE".
+
+a 2a 49c2eb20bd
+a 2b 4de0cd8126
+b 2a 25fb08b566
+d 26
+c 25
+b 24 2238eab35b
+a 24 1eb66d3353
+a 26 22d486f76a
+a 2a 259782edb2
+8 2b 44cbe6c977
+6 2e 412b8d2137
+5 30
+4 30
+f

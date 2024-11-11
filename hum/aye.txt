@@ -1,0 +1,18 @@
+# Derived from "EYE".
+
+c 24 41ef910776
+d 26
+e 28
+e 2b
+e 2b
+e 2c
+e 2c 426f4ed16d
+d 2e
+d 2e 426f0ef19c
+b 2f 46876cf74c
+a 2f 426ab38d0a
+9 30
+7 30 3dc93b2ac3
+6 2f 41e6592ec3
+4 2b
+f

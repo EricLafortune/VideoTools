@@ -1,0 +1,15 @@
+# Derived from "LIKE".
+
+5 2b 2637ea372c
+8 2a
+a 2c
+c 2b
+d 2a
+e 28 3ab36b16e4
+e 28
+e 2a 46b18ad6e4
+c 2c 4ed14c76ec
+a 2f 4b4b255ab1
+8 31 52e8c6fb11
+6 32 52c2ad154a
+f

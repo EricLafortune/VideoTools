@@ -1,0 +1,12 @@
+# Derived from "PARTS".
+
+5 1cc76
+2 00
+3 00
+b 24 2e97704b5b
+d 26 325930c7ac
+c 27 32baef25ac
+c 28 36d6b181b4
+9 2b
+6 2c 37106fe6f7
+f

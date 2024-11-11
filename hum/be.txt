@@ -1,0 +1,14 @@
+# Derived from "BE".
+
+d 2d 5e2ca2eb76
+d 2d 5a2ea0f7b5
+c 2c 668a6311ac
+d 2c
+d 2c
+d 2c
+c 2c
+b 2d
+a 2d
+8 2f
+6 2f
+f
