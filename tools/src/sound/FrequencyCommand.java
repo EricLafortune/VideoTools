@@ -28,8 +28,20 @@ package sound;
 public class FrequencyCommand
 extends      SoundCommand
 {
-    public static final int MIN_DIVIDER = 0x0001;
-    public static final int MAX_DIVIDER = 0x03ff;
+    public static final int MIN_TONE_DIVIDER = 0x0001;
+    public static final int MAX_TONE_DIVIDER = 0x03ff;
+
+    public static final int MIN_NOISE_DIVIDER = 0x0;
+    public static final int MAX_NOISE_DIVIDER = 0x7;
+
+    public static final int PERIODIC_NOISE0_DIVIDER      = 0x0;
+    public static final int PERIODIC_NOISE1_DIVIDER      = 0x1;
+    public static final int PERIODIC_NOISE2_DIVIDER      = 0x2;
+    public static final int TUNED_PERIODIC_NOISE_DIVIDER = 0x3;
+    public static final int WHITE_NOISE0_DIVIDER         = 0x4;
+    public static final int WHITE_NOISE1_DIVIDER         = 0x5;
+    public static final int WHITE_NOISE2_DIVIDER         = 0x6;
+    public static final int TUNED_WHITE_NOISE_DIVIDER    = 0x7;
 
     static final int TONE0_FREQUENCY = 0x80;
     static final int TONE1_FREQUENCY = 0xa0;
@@ -47,37 +59,47 @@ extends      SoundCommand
     {
         super(generator);
 
+        //if (generator < NOISE ?
+        //        divider < MIN_TONE_DIVIDER ||
+        //        divider > MAX_TONE_DIVIDER :
+        //        divider < MIN_NOISE_DIVIDER ||
+        //        divider > MAX_NOISE_DIVIDER)
+        //{
+        //    throw new IllegalArgumentException("Frequency divider ["+divider+"] outside of valid range for "+generatorName());
+        //}
+
         this.divider = divider;
     }
 
 
     public boolean isPeriodicNoise()
     {
-        return isNoise() && (divider & 4) == 0;
+        return isNoise() && divider <= TUNED_PERIODIC_NOISE_DIVIDER;
     }
 
 
     public boolean isWhiteNoise()
     {
-        return isNoise() && (divider & 4) == 4;
+        return isNoise() && divider >= WHITE_NOISE0_DIVIDER;
     }
 
 
     public boolean isTunedNoise()
     {
-        return isNoise() && (divider & 3) == 3;
+        return isNoise() && (divider == TUNED_PERIODIC_NOISE_DIVIDER ||
+                             divider == TUNED_WHITE_NOISE_DIVIDER);
     }
 
 
     public boolean isTunedPeriodicNoise()
     {
-        return isNoise() && (divider & 7) == 3;
+        return isNoise() && divider == TUNED_PERIODIC_NOISE_DIVIDER;
     }
 
 
     public boolean isTunedWhiteNoise()
     {
-        return isNoise() && (divider & 7) == 7;
+        return isNoise() && divider == TUNED_WHITE_NOISE_DIVIDER;
     }
 
 

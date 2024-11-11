@@ -41,6 +41,12 @@ public abstract class SoundCommand
 
     public SoundCommand(int generator)
     {
+        if (generator < TONE0 ||
+            generator > NOISE)
+        {
+            throw new IllegalArgumentException("Invalid generator ["+generator+"]");
+        }
+
         this.generator = generator;
     }
 

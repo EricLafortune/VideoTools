@@ -27,6 +27,7 @@ public class VolumeCommand
 extends      SoundCommand
 {
     public static final int SILENT = 0xf;
+    public static final int MAX    = 0x0;
 
     static final int TONE0_VOLUME = 0x90;
     static final int TONE1_VOLUME = 0xb0;
@@ -43,6 +44,12 @@ extends      SoundCommand
     public VolumeCommand(int generator, int attenuation)
     {
         super(generator);
+
+        //if (attenuation < MAX ||
+        //    attenuation > SILENT)
+        //{
+        //    throw new IllegalArgumentException("Sound attenuation ["+attenuation+"] outside of valid range");
+        //}
 
         this.attenuation = attenuation;
     }
