@@ -6,8 +6,8 @@
 # We're packaging the output as an RPK for Mame,
 # using the ROM naming convention for FinalGROM 99.
 #
-# Useful xas99 option for debugging:
-#   --listing-file out/romc.lst
+# Useful xas99 options for debugging:
+#   --listing-file out/romc.lst --symbol-table
 
 export CLASSPATH=../tools/out/videotools.jar
 
