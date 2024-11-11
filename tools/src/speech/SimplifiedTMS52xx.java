@@ -143,13 +143,13 @@ extends      TMS52xx
         // Count the number of LPC coefficient frames in the input file.
         int frameCount = 0;
 
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputFileName))))
         {
             LpcFrame frame;
-            while ((frame = lpcFrameInputStream.readFrame()) != null)
+            while ((frame = lpcFrameInput.readFrame()) != null)
             {
                 frameCount++;
 

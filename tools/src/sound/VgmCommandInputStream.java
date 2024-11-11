@@ -31,7 +31,7 @@ import java.io.*;
  * @see SoundCommand
  */
 public class VgmCommandInputStream
-implements   AutoCloseable
+    implements SoundCommandInput
 {
     private final VgmInputStream vgmInputStream;
 
@@ -59,6 +59,8 @@ implements   AutoCloseable
     }
 
 
+    // Implementations for SoundCommandInputStream.
+
     /**
      * Parses, collects, and returns all SN76489 sound commands between the
      * previous request and this request, 1/50th of a second later.
@@ -74,18 +76,12 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Skips a frame.
-     */
     public void skipFrame() throws IOException
     {
         vgmInputStream.skipFrame();
     }
 
 
-    /**
-     * Skips the given number of frames.
-     */
     public void skipFrames(int count) throws IOException
     {
         vgmInputStream.skipFrames(count);
@@ -105,7 +101,7 @@ implements   AutoCloseable
      */
     public static void main(String[] args)
     {
-        try (VgmCommandInputStream vgmCommandInputStream =
+        try (SoundCommandInput soundCommandInput =
                  new VgmCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
@@ -113,7 +109,7 @@ implements   AutoCloseable
             int counter = 0;
 
             SoundCommand[] soundCommands;
-            while ((soundCommands = vgmCommandInputStream.readFrame()) != null)
+            while ((soundCommands = soundCommandInput.readFrame()) != null)
             {
                 System.out.println("#"+(counter++)+":");
 

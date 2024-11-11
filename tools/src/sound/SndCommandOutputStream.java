@@ -22,8 +22,8 @@ package sound;
 import java.io.*;
 
 /**
- * This class writes sound commands to an output stream in our custom
- * Sound (.snd) format.
+ * This SoundCommandOutput writes sound commands to an output stream in our
+ * custom Sound (.snd) format.
  *
  * This format contains an optimized stream of bytes with chunks that can be
  * sent to the video the sound processor (TMS9919 or SN76489).
@@ -31,7 +31,7 @@ import java.io.*;
  * @see SoundCommand
  */
 public class SndCommandOutputStream
-implements   AutoCloseable
+implements   SoundCommandOutput
 {
     private final OutputStream outputStream;
 
@@ -45,25 +45,24 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Writes the given list of sound commands.
-     */
-    public void writeSoundCommands(SoundCommand[] soundCommands)
+    // Implementations for SoundCommandOutput.
+
+    public void writeFrame(SoundCommand[] soundFrame)
     throws IOException
     {
         // Compute and write the total size of all commands.
         int dataByteCount = 0;
-        for (int index = 0; index < soundCommands.length; index++)
+        for (int index = 0; index < soundFrame.length; index++)
         {
-            dataByteCount += soundCommands[index].toBytes().length;
+            dataByteCount += soundFrame[index].toBytes().length;
         }
 
         outputStream.write(dataByteCount);
 
         // Write the commands themselves.
-        for (int index = 0; index < soundCommands.length; index++)
+        for (int index = 0; index < soundFrame.length; index++)
         {
-            outputStream.write(soundCommands[index].toBytes());
+            outputStream.write(soundFrame[index].toBytes());
         }
     }
 
@@ -81,20 +80,20 @@ implements   AutoCloseable
      */
     public static void main(String[] args)
     {
-        try (SndCommandInputStream sndCommandInputStream =
-                 new SndCommandInputStream(
+        try (SoundCommandInput soundCommandInput =
+                 new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
         {
-            try (SndCommandOutputStream sndCommandOutputStream =
+            try (SoundCommandOutput soundCommandOutput =
                      new SndCommandOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(args[1]))))
             {
                 SoundCommand[] commands;
-                while ((commands = sndCommandInputStream.readFrame()) != null)
+                while ((commands = soundCommandInput.readFrame()) != null)
                 {
-                    sndCommandOutputStream.writeSoundCommands(commands);
+                    soundCommandOutput.writeFrame(commands);
                 }
             }
         }

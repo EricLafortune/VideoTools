@@ -40,7 +40,7 @@ public class ConvertLpcToText
         String inputLpcFileName   = args[argIndex++];
         String outputTextFileName = args[argIndex++];
 
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputLpcFileName))))
@@ -53,7 +53,7 @@ public class ConvertLpcToText
                 while (true)
                 {
                     LpcFrame lpcFrame =
-                        lpcFrameInputStream.readFrame();
+                        lpcFrameInput.readFrame();
 
                     if (lpcFrame == null)
                     {

@@ -22,13 +22,12 @@ package speech;
 import java.io.*;
 
 /**
- * This class writes frames to an output stream in Linear Predictive Coding
- * (LPC) format for the TMS5200 speech synthesizer.
+ * This LpcFrameOutput writes LPC frames to a given output stream.
  *
  * @see LpcFrame
  */
 public class LpcFrameOutputStream
-implements   AutoCloseable
+implements   LpcFrameOutput
 {
     private final OutputStream outputStream;
 
@@ -46,9 +45,8 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Writes the given LPC frame to the stream.
-     */
+    // Implementation for LpcFrameOutput.
+
     public void writeFrame(LpcFrame frame) throws IOException
     {
         int bitCount = frame.bitCount();
@@ -88,20 +86,20 @@ implements   AutoCloseable
     public static void main(String[] args)
     throws IOException
     {
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
         {
-            try (LpcFrameOutputStream lpcFrameOutputStream =
+            try (LpcFrameOutput lpcFrameOutput =
                      new LpcFrameOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(args[1]))))
             {
                 LpcFrame frame;
-                while ((frame = lpcFrameInputStream.readFrame()) != null)
+                while ((frame = lpcFrameInput.readFrame()) != null)
                 {
-                    lpcFrameOutputStream.writeFrame(frame);
+                    lpcFrameOutput.writeFrame(frame);
                 }
             }
         }

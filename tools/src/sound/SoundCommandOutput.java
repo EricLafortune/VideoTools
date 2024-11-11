@@ -17,32 +17,14 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package display;
+package sound;
 
-import java.io.IOException;
+import util.*;
 
 /**
- * This interface provides an input stream for {@link Display} objects.
+ * This interface provides a method to write a stream of sound command frames.
  */
-public interface DisplayInputStream extends AutoCloseable
+public interface SoundCommandOutput
+extends          FrameOutput<SoundCommand[]>
 {
-    /**
-     * Returns the next frame in the input stream.
-     */
-    public Display readFrame() throws IOException;
-
-    /**
-     * Skips a frame.
-     */
-    public void skipFrame() throws IOException;
-
-    /**
-     * Skips the given number of frames.
-     */
-    public void skipFrames(int count) throws IOException;
-
-
-    // Refinement for AutoCloseable.
-
-    public void close() throws IOException;
 }

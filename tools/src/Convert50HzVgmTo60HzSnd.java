@@ -41,13 +41,13 @@ public class Convert50HzVgmTo60HzSnd
             Integer.parseInt(args[index++]) :
             VgmInputStream.FRAME_TIME_50_FPS;
 
-        try (VgmCommandInputStream vgmCommandInputStream =
+        try (SoundCommandInput soundCommandInput =
                  new VgmCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[index++])),
                  frameTime))
         {
-            try (SndCommandOutputStream sndCommandOutputStream =
+            try (SoundCommandOutput soundCommandOutput =
                      new SndCommandOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(args[index++]))))
@@ -57,7 +57,7 @@ public class Convert50HzVgmTo60HzSnd
                 boolean previousSplit = false;
 
                 SoundCommand[] commands;
-                while ((commands = vgmCommandInputStream.readFrame()) != null)
+                while ((commands = soundCommandInput.readFrame()) != null)
                 {
                     streamTime += frameTime;
 
@@ -102,12 +102,12 @@ public class Convert50HzVgmTo60HzSnd
                                          commands2.length);
 
                         // Write out the lists.
-                        sndCommandOutputStream.writeSoundCommands(commands1);
-                        sndCommandOutputStream.writeSoundCommands(commands2);
+                        soundCommandOutput.writeFrame(commands1);
+                        soundCommandOutput.writeFrame(commands2);
                     }
                     else
                     {
-                        sndCommandOutputStream.writeSoundCommands(commands);
+                        soundCommandOutput.writeFrame(commands);
                     }
 
                     previousSplit = split;

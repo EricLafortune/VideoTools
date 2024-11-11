@@ -38,8 +38,9 @@ implements   Cloneable
 {
     private static final boolean DEBUG = false;
 
-    public static final double FREQUENCY  = 8000;
-    public static final int    FRAME_SIZE = 200;
+    public static final double FRAME_FREQUENCY = 40.0;
+    public static final double SOUND_FREQUENCY = 8000.0;
+    public static final int    FRAME_SIZE      = 200;
 
     private static final int[] INTERPOLATION_SHIFT_COEFFICIENTS =
         { 0, 3, 3, 3, 2, 2, 1, 1 };
@@ -261,7 +262,7 @@ implements   Cloneable
         }
         else if (lpcFrame instanceof LpcSilenceFrame)
         {
-            energyIndex = 0x0;
+            energyIndex = lpcQuantization.silenceEnergy();
         }
         else if (lpcFrame instanceof LpcRepeatFrame)
         {
@@ -618,7 +619,7 @@ implements   Cloneable
 
     private boolean silence(int energyIndex)
     {
-        return energyIndex == 0x0;
+        return energyIndex == lpcQuantization.silenceEnergy();
     }
 
     private boolean unvoiced(int pitchIndex)
@@ -684,11 +685,12 @@ implements   Cloneable
 
         while (args[argIndex].startsWith("-"))
         {
-            quantization = switch (args[argIndex++])
+            switch (args[argIndex++])
             {
-                case "-tms5200" -> LpcQuantization.TMS5200;
-                case "-tms5220" -> LpcQuantization.TMS5220;
-                default         -> throw new IllegalArgumentException("Unknown option [" + args[--argIndex] + "]");
+                case "-quantization" -> quantization = LpcQuantization.valueOf(args[argIndex++].toUpperCase());
+                case "-tms5200"      -> quantization = LpcQuantization.TMS5200;
+                case "-tms5220"      -> quantization = LpcQuantization.TMS5220;
+                default              -> throw new IllegalArgumentException("Unknown option [" + args[--argIndex] + "]");
             };
         }
 
@@ -698,13 +700,13 @@ implements   Cloneable
         // Count the number of LPC coefficient frames in the input file.
         int frameCount = 0;
 
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputFileName))))
         {
             LpcFrame frame;
-            while ((frame = lpcFrameInputStream.readFrame()) != null)
+            while ((frame = lpcFrameInput.readFrame()) != null)
             {
                 frameCount++;
 

@@ -27,7 +27,7 @@ import java.io.*;
  * @see LpcFrame
  */
 public class LpcFrameWriter
-implements   AutoCloseable
+implements   LpcFrameOutput
 {
     private final Writer writer;
 
@@ -42,9 +42,8 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Writes the given LPC frame to the writer.
-     */
+    // Implementation for LpcFrameOutput.
+
     public void writeFrame(LpcFrame frame) throws IOException
     {
         if      (frame instanceof LpcVoicedFrame)
@@ -97,20 +96,20 @@ implements   AutoCloseable
      */
     public static void main(String[] args)
     {
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
         {
-            try (LpcFrameWriter lpcFrameWriter =
+            try (LpcFrameOutput lpcFrameOutput =
                      new LpcFrameWriter(
                      new BufferedWriter(
                      new FileWriter(args[1]))))
             {
                 LpcFrame frame;
-                while ((frame = lpcFrameInputStream.readFrame()) != null)
+                while ((frame = lpcFrameInput.readFrame()) != null)
                 {
-                    lpcFrameWriter.writeFrame(frame);
+                    lpcFrameOutput.writeFrame(frame);
                 }
             }
         }

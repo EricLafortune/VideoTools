@@ -83,13 +83,13 @@ public class TuneLpcFile
 
         String   outputLpcFileName  = args[argIndex++];
 
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputLpcFileName))))
         {
-            try (SndCommandInputStream sndCommandInputStream =
-                     new SndCommandInputStream(
+            try (SoundCommandInputStream sndCommandInputStream =
+                     new SoundCommandInputStream(
                      new BufferedInputStream(
                      new FileInputStream(inputSndFileName))))
             {
@@ -98,7 +98,7 @@ public class TuneLpcFile
                          new BufferedOutputStream(
                          new FileOutputStream(outputLpcFileName))))
                 {
-                    lpcFrameInputStream.skipFrames(inputLpcStartFrame);
+                    lpcFrameInput.skipFrames(inputLpcStartFrame);
                     sndCommandInputStream.skipFrames(inputSndStartFrame);
 
                     int currentSoundFrequency = (int)minFrequency;
@@ -129,7 +129,7 @@ public class TuneLpcFile
                             inputLpcFrameIndex++;
 
                             LpcFrame lpcFrame =
-                                lpcFrameInputStream.readFrame();
+                                lpcFrameInput.readFrame();
 
                             if (lpcFrame == null)
                             {

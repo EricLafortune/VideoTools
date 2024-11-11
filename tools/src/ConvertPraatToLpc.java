@@ -26,7 +26,7 @@ import java.io.*;
  * format to a file in LPC format for the TMS5200 speech synthesizer.
  *
  * Usage:
- *     java ConvertPraatToLpc [-tms5200|-tms5220] [-8kHz|-10kHz] [-addstopframe] input.Pitch input.LPC unvoiced_energy_factor voiced_energy_factor output.lpc
+ *     java ConvertPraatToLpc [-chip name|-tms5200|-tms5220] [-8kHz|-10kHz] [-addstopframe] input.Pitch input.LPC unvoiced_energy_factor voiced_energy_factor output.lpc
  */
 public class ConvertPraatToLpc
 {
@@ -47,42 +47,18 @@ public class ConvertPraatToLpc
         double          samplingPeriod0 = SAMPLING_PERIOD8;
         boolean         addStopFrame    = false;
 
-        while (true)
+        while (args[argIndex].startsWith("-"))
         {
-            String arg = args[argIndex];
-            if (!arg.startsWith("-"))
+            switch (args[argIndex++])
             {
-                break;
+                case "-chip"         -> quantization = LpcQuantization.valueOf(args[argIndex++].toUpperCase());
+                case "-tms5200"      -> quantization = LpcQuantization.TMS5200;
+                case "-tms5220"      -> quantization = LpcQuantization.TMS5220;
+                case "-8kHz"         -> { dx0 = DX8;  samplingPeriod0 = SAMPLING_PERIOD8;  }
+                case "-10kHz"        -> { dx0 = DX10; samplingPeriod0 = SAMPLING_PERIOD10; }
+                case "-addstopframe" -> addStopFrame = true;
+                default              -> throw new IllegalArgumentException("Unknown option [" + args[argIndex-1] + "]");
             }
-
-            if      (arg.equals("-tms5200"))
-            {
-                quantization = LpcQuantization.TMS5200;
-            }
-            else if (arg.equals("-tms5220"))
-            {
-                quantization = LpcQuantization.TMS5220;
-            }
-            else if (arg.equals("-8kHz"))
-            {
-                dx0             = DX8;
-                samplingPeriod0 = SAMPLING_PERIOD8;
-            }
-            else if (arg.equals("-10kHz"))
-            {
-                dx0             = DX10;
-                samplingPeriod0 = SAMPLING_PERIOD10;
-            }
-            else if (arg.equals("-addstopframe"))
-            {
-                addStopFrame = true;
-            }
-            else
-            {
-                throw new IllegalArgumentException("Unknown option ["+arg+"]");
-            }
-
-            argIndex++;
         }
 
         String praatPitchFileName   = args[argIndex++];

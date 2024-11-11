@@ -18,7 +18,6 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 import sound.*;
-import speech.*;
 
 import java.io.*;
 
@@ -43,12 +42,12 @@ public class CutSndFile
         int    stopFrame         = Integer.parseInt(args[2]);
         String outputSndFileName = args[3];
 
-        try (SndCommandInputStream sndCommandInputStream =
-                 new SndCommandInputStream(
+        try (SoundCommandInputStream sndCommandInputStream =
+                 new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputSndFileName))))
         {
-            try (SndCommandOutputStream sndCommandOutputStream =
+            try (SoundCommandOutput soundCommandOutput =
                      new SndCommandOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(outputSndFileName))))
@@ -65,7 +64,7 @@ public class CutSndFile
                         break;
                     }
 
-                    sndCommandOutputStream.writeSoundCommands(frame);
+                    soundCommandOutput.writeFrame(frame);
                 }
             }
         }

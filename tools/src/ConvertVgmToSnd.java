@@ -39,21 +39,21 @@ public class ConvertVgmToSnd
             Integer.parseInt(args[index++]) :
             VgmInputStream.FRAME_TIME_60_FPS;
 
-        try (VgmCommandInputStream vgmCommandInputStream =
+        try (SoundCommandInput soundCommandInput =
                  new VgmCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[index++])),
                  frameTime))
         {
-            try (SndCommandOutputStream sndCommandOutputStream =
+            try (SoundCommandOutput soundCommandOutput =
                      new SndCommandOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(args[index++]))))
             {
                 SoundCommand[] commands;
-                while ((commands = vgmCommandInputStream.readFrame()) != null)
+                while ((commands = soundCommandInput.readFrame()) != null)
                 {
-                    sndCommandOutputStream.writeSoundCommands(commands);
+                    soundCommandOutput.writeFrame(commands);
                 }
             }
         }

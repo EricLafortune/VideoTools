@@ -19,33 +19,14 @@
  */
 package sound;
 
-import java.io.*;
+import util.FrameInput;
 
 /**
- * This interface provides an input stream for data frames for the
- * TMS9919 / SN76489 sound processor.
+ * This interface provides an input stream of raw data frames for the
+ * TMS9919 / SN76489 sound processor. Each frame is a sequence of bytes that
+ * can be sent to the sound processor.
  */
-public interface SoundInputStream
-extends          AutoCloseable
+public interface SndInput
+extends          FrameInput<byte[]>
 {
-    /**
-     * Returns the next frame in the input stream. Each frame is a sequence
-     * of bytes that can be sent to the sound processor.
-     */
-    public byte[] readFrame() throws IOException;
-
-    /**
-     * Skips a frame.
-     */
-    public void skipFrame() throws IOException;
-
-    /**
-     * Skips the given number of frames.
-     */
-    public void skipFrames(int count) throws IOException;
-
-
-    // Refinement for AutoCloseable.
-
-    public void close() throws IOException;
 }

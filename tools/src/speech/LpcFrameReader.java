@@ -22,13 +22,13 @@ package speech;
 import java.io.*;
 
 /**
- * This class parses and returns LPC frames from a reader in a simple text
- * format.
+ * This LpcFrameInput parses and returns frames from a reader in a simple text
+ * Linear Predictive Coding (LPC) format.
  *
  * @see LpcFrame
  */
 public class LpcFrameReader
-implements   AutoCloseable
+implements   LpcFrameInput
 {
     private final LineNumberReader reader;
 
@@ -42,9 +42,8 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Parses and returns the next LPC frame from the reader.
-     */
+    // Implementations for LpcFrameInput.
+
     public LpcFrame readFrame() throws IOException
     {
         while (true)
@@ -108,27 +107,6 @@ implements   AutoCloseable
             {
                 throw new IOException("Invalid number in frame ["+line+"] at line "+(reader.getLineNumber()-1), e);
             }
-        }
-    }
-
-
-    /**
-     * Skips a frame.
-     */
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    /**
-     * Skips the given number of frames.
-     */
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
         }
     }
 

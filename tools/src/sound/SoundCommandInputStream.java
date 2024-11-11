@@ -30,8 +30,8 @@ import java.io.*;
  *
  * @see SoundCommand
  */
-public class SndCommandInputStream
-implements   AutoCloseable
+public class SoundCommandInputStream
+implements   SoundCommandInput
 {
     private static final SoundCommand[] SILENCE_COMMANDS = new SoundCommand[]
     {
@@ -48,7 +48,7 @@ implements   AutoCloseable
     /**
      * Creates a new instance that reads its data from the given input stream.
      */
-    public SndCommandInputStream(InputStream inputStream)
+    public SoundCommandInputStream(InputStream inputStream)
     {
         this(inputStream, false);
     }
@@ -58,17 +58,16 @@ implements   AutoCloseable
      * Creates a new instance that reads its data from the given input stream
      * and optionally adds a frame to silence all sound generators at the end.
      */
-    public SndCommandInputStream(InputStream inputStream,
-                                 boolean addSilenceCommands)
+    public SoundCommandInputStream(InputStream inputStream,
+                                   boolean     addSilenceCommands)
     {
         this.inputStream        = inputStream;
         this.addSilenceCommands = addSilenceCommands;
     }
 
 
-    /**
-     * Parses, collects, and returns the next list of sound commands.
-     */
+    // Implementations for SoundCommandInputStream.
+
     public SoundCommand[] readFrame() throws IOException
     {
         int size = inputStream.read();
@@ -90,9 +89,6 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Skips a frame.
-     */
     public void skipFrame() throws IOException
     {
         int size = inputStream.read();
@@ -102,18 +98,6 @@ implements   AutoCloseable
         }
 
         inputStream.skipNBytes((long)size);
-    }
-
-
-    /**
-     * Skips the given number of frames.
-     */
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
     }
 
 
@@ -130,15 +114,15 @@ implements   AutoCloseable
      */
     public static void main(String[] args)
     {
-        try (SndCommandInputStream sndCommandInputStream =
-                 new SndCommandInputStream(
+        try (SoundCommandInput soundCommandInput =
+                 new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
         {
             int counter = 0;
 
             SoundCommand[] soundCommands;
-            while ((soundCommands = sndCommandInputStream.readFrame()) != null)
+            while ((soundCommands = soundCommandInput.readFrame()) != null)
             {
                 System.out.println("#"+(counter++)+":");
 

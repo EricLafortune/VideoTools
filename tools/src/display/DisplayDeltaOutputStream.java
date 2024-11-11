@@ -50,12 +50,20 @@ implements   AutoCloseable
     }
 
 
+    /**
+     * Returns whether the instance is ready to write the first part of the
+     * display update, that is, if the second part of the previous update has
+     * been written.
+     */
     public boolean readyToWriteDisplayDelta1()
     {
         return targetDisplay == null;
     }
 
 
+    /**
+     * Writes the first part of the display update.
+     */
     public void writeDisplayDelta1(Display display)
     throws IOException
     {
@@ -83,6 +91,9 @@ implements   AutoCloseable
     }
 
 
+    /**
+     * Writes the second part of the display update.
+     */
     public void writeDisplayDelta2()
     throws IOException
     {

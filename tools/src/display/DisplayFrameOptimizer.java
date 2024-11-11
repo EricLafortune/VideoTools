@@ -556,7 +556,7 @@ public class DisplayFrameOptimizer
         {
             String inputImageFileName  = args[argIndex];
 
-            try (DisplayInputStream dsplayInputStream =
+            try (DisplayInput dsplayInputStream =
                      inputImageFileName.endsWith(".zip") ? new ZipDisplayInputStream(
                                                            new BufferedInputStream(
                                                            new FileInputStream(inputImageFileName))) :

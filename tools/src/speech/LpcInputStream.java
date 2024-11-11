@@ -22,13 +22,16 @@ package speech;
 import java.io.*;
 
 /**
- * This class parses and returns frame data from an input stream in Linear
- * Predictive Coding (LPC) format for the TMS5200 speech synthesizer.
+ * This LpcInput parses and returns raw data frames from an input stream in
+ * binary Linear Predictive Coding (LPC) format.
+ *
+ * Since LPC frames are defined as a bit stream, the 0 to 7 bytes in a frame
+ * may already contain bits of the next frame.
  *
  * @see http://www.unige.ch/medecine/nouspikel/ti99/speech.htm
  */
 public class LpcInputStream
-implements   AutoCloseable
+implements   LpcInput
 {
     private static final boolean DEBUG = false;
 
@@ -58,14 +61,14 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Parses and returns the LPC data of the next frame in the stream
-     * (which contains frames at a rate of 25 fps). The resulting sample bytes
-     * can be sent to the buffer of the speech synthesizer. The 0 to 7 bytes
-     * may already contain bits of the frame after.
-     */
+    // Implementations for LpcInput.
+
     public byte[] readFrame() throws IOException
     {
+        // A speech frame can be between 0 bytes (4 bits for a silence that
+        // was already included in the previous frame) and 7 bytes (50 bits
+        // for a voiced frame).
+
         // Collect the speech data.
         byte[] dataBytes     = new byte[8];
         int    dataByteCount = 0;
@@ -76,11 +79,14 @@ implements   AutoCloseable
 
             if (DEBUG)
             {
-                System.err.print("Command: SPEAK_EXTERNAL (8 bits)");
+                System.out.print("Command: SPEAK_EXTERNAL (8 bits)");
             }
 
             dataBytes[dataByteCount++] = SPEAK_EXTERNAL;
         }
+
+        int initialDataBitCount = dataBitCount;
+        int frameBitCount;
 
         // Collect bytes and bits until they contain at least one complete command.
         while (true)
@@ -93,10 +99,11 @@ implements   AutoCloseable
                 {
                     if (DEBUG)
                     {
-                        System.err.print(String.format("Frame: STOP    : energy = %1x                                         ( 4", energy));
+                        System.out.printf("Frame: STOP    : energy = %1x                                         ", energy);
                     }
 
-                    dataBitCount = 0;
+                    frameBitCount = 4;
+                    dataBitCount  = 4;
                     break;
                 }
 
@@ -104,10 +111,10 @@ implements   AutoCloseable
                 {
                     if (DEBUG)
                     {
-                        System.err.print(String.format("Frame: SILENCE : energy = %1x                                         ( 4", energy));
+                        System.out.printf("Frame: SILENCE : energy = %1x                                         ", energy);
                     }
 
-                    dataBitCount -= 4;
+                    frameBitCount = 4;
                     break;
                 }
 
@@ -120,10 +127,10 @@ implements   AutoCloseable
                     {
                         if (DEBUG)
                         {
-                            System.err.print(String.format("Frame: REPEAT  : energy = %1x, repeat = 1, pitch = %02x                 (11", energy, pitch));
+                            System.out.printf("Frame: REPEAT  : energy = %1x, repeat = 1, pitch = %02x                 ", energy, pitch);
                         }
 
-                        dataBitCount -= 11;
+                        frameBitCount = 11;
                         break;
                     }
 
@@ -135,10 +142,10 @@ implements   AutoCloseable
 
                             if (DEBUG)
                             {
-                                System.err.print(String.format("Frame: UNVOICED: energy = %1x, repeat = 0, pitch = %02x, k = %05x      (29", energy, pitch, k));
+                                System.out.printf("Frame: UNVOICED: energy = %1x, repeat = 0, pitch = %02x, k = %05x      ", energy, pitch, k);
                             }
 
-                            dataBitCount -= 29;
+                            frameBitCount = 29;
                             break;
                         }
 
@@ -148,10 +155,10 @@ implements   AutoCloseable
 
                             if (DEBUG)
                             {
-                                System.err.print(String.format("Frame: VOICED  : energy = %1x, repeat = 0, pitch = %02x, k = %010x (50", energy, pitch, k));
+                                System.out.printf("Frame: VOICED  : energy = %1x, repeat = 0, pitch = %02x, k = %010x ", energy, pitch, k);
                             }
 
-                            dataBitCount -= 50;
+                            frameBitCount = 50;
                             break;
                         }
                     }
@@ -163,7 +170,7 @@ implements   AutoCloseable
             {
                 if (DEBUG)
                 {
-                    System.err.print("EOF (0");
+                    System.out.println("EOF");
                 }
 
                 return null;
@@ -180,11 +187,17 @@ implements   AutoCloseable
             dataBitCount += 8;
         }
 
+        dataBitCount -= frameBitCount;
+
         if (DEBUG)
         {
-            System.err.println(String.format(" bits plus %d bits for the next frame: %02x)",
-                                             dataBitCount,
-                                             dataBits & ((1 << dataBitCount) - 1)));
+            System.out.printf("(%2d bits = %d old bits + %d new bits, plus %d bits for the next frame (%02x) = %d bytes)\n",
+                              frameBitCount,
+                              initialDataBitCount,
+                              8 * dataByteCount - dataBitCount,
+                              dataBitCount,
+                              dataBits & ((1L << dataBitCount) - 1),
+                              dataByteCount);
         }
 
         // Trim the speech data.
@@ -193,115 +206,6 @@ implements   AutoCloseable
                          trimmedDataBytes, 0, dataByteCount);
 
         return trimmedDataBytes;
-    }
-
-
-    /**
-     * Skips a frame (only at the start of a stream).
-     */
-    public void skipFrame() throws IOException
-    {
-        // Skip bits until they represent at least one complete command.
-        while (true)
-        {
-            if (dataBitCount >= 4)
-            {
-                int energy = (int)(dataBits >>> (dataBitCount - 4)) & 0xf;
-
-                if (energy == STOP)
-                {
-                    if (DEBUG)
-                    {
-                        System.err.print(String.format("Skip frame: STOP    : energy = %1x                                         ( 4", energy));
-                    }
-
-                    dataBitCount = 0;
-                    break;
-                }
-
-                if (energy == SILENCE)
-                {
-                    if (DEBUG)
-                    {
-                        System.err.print(String.format("Skip frame: SILENCE : energy = %1x                                         ( 4", energy));
-                    }
-
-                    dataBitCount -= 4;
-                    break;
-                }
-
-                if (dataBitCount >= 11)
-                {
-                    int repeat = (int)(dataBits >>> (dataBitCount -  5)) & 0x1;
-                    int pitch  = (int)(dataBits >>> (dataBitCount - 11)) & 0x3f;
-
-                    if (repeat == REPEAT)
-                    {
-                        if (DEBUG)
-                        {
-                            System.err.print(String.format("Skip frame: REPEAT  : energy = %1x, repeat = 1, pitch = %02x                 (11", energy, pitch));
-                        }
-
-                        dataBitCount -= 11;
-                        break;
-                    }
-
-                    if (dataBitCount >= 29)
-                    {
-                        if (pitch == UNVOICED)
-                        {
-                            int k = (int)(dataBits >>> (dataBitCount - 29)) & (1 << 18)-1;
-
-                            if (DEBUG)
-                            {
-                                System.err.print(String.format("Skip frame: UNVOICED: energy = %1x, repeat = 0, pitch = %02x, k = %05x      (29", energy, pitch, k));
-                            }
-
-                            dataBitCount -= 29;
-                            break;
-                        }
-
-                        if (dataBitCount >= 50)
-                        {
-                            long k = (dataBits >>> (dataBitCount - 50)) & (1L << 39)-1;
-
-                            if (DEBUG)
-                            {
-                                System.err.print(String.format("Skip frame: VOICED  : energy = %1x, repeat = 0, pitch = %02x, k = %010x (50", energy, pitch, k));
-                            }
-
-                            dataBitCount -= 50;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            int b = inputStream.read();
-            if (b == -1)
-            {
-                throw new IOException("Unexpected EOF");
-            }
-
-            // Collect the speech bits in a long integer.
-            // The original bits are stored starting in the least significant bit
-            // of each byte, but we can parse them more naturally if they are
-            // in reverse order.
-            dataBits = (dataBits << 8) | (Integer.reverse(b) >>> 24);
-            dataBitCount += 8;
-        }
-    }
-
-
-    /**
-     * Skips the given number of frames (only at the start of a stream).
-     */
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
     }
 
 
@@ -317,8 +221,9 @@ implements   AutoCloseable
      * Prints out the sample data of the specified LPC file.
      */
     public static void main(String[] args)
+    throws IOException
     {
-        try (LpcInputStream lpcInputStream =
+        try (LpcInput lpcInput =
                  new LpcInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0])),
@@ -327,19 +232,15 @@ implements   AutoCloseable
             int counter = 0;
 
             byte[] speechData;
-            while ((speechData = lpcInputStream.readFrame()) != null)
+            while ((speechData = lpcInput.readFrame()) != null)
             {
-                System.out.print(String.format("%4d: %2d bytes:", counter++, speechData.length));
+                System.out.printf("%4d: %2d bytes: ", counter++, speechData.length);
                 for (int index = 0; index < speechData.length; index++)
                 {
-                    System.out.print(String.format(" %02x", speechData[index]));
+                    System.out.printf(" %02x", speechData[index]);
                 }
                 System.out.println();
             }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
         }
     }
 }

@@ -22,8 +22,8 @@ package video;
 import java.io.IOException;
 
 /**
- * This output stream writes output in our custom TMS video format,
- * containing any combination of animation, sound, and speech.
+ * This interface provide methods to write output in our custom TMS video
+ * format, containing any combination of animation, sound, and speech.
  *
  * This format contains an optimized stream of bytes with chunks that can be
  * sent to the video display processor (TMS9918), to the sound processor

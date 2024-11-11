@@ -22,13 +22,13 @@ package speech;
 import java.io.*;
 
 /**
- * This class parses and returns frames from on input stream in Linear
- * Predictive Coding (LPC) format for the TMS5200 speech synthesizer.
+ * This LpcFrameInput parses and returns frames from an input stream in binary
+ * Linear Predictive Coding (LPC) format.
  *
  * @see LpcFrame
  */
 public class LpcFrameInputStream
-implements   AutoCloseable
+implements   LpcFrameInput
 {
     private static final int SILENCE  = 0x0;
     private static final int STOP     = 0xf;
@@ -63,10 +63,8 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Parses and returns the next LPC frame in the stream (which contains frames
-     * at a rate of 40 fps).
-     */
+    // Implementations for LpcFrameInput.
+
     public LpcFrame readFrame() throws IOException
     {
         // Collect bits until they contain at least one complete command.
@@ -152,27 +150,6 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Skips a frame.
-     */
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    /**
-     * Skips the given number of frames.
-     */
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
-    }
-
-
     // Implementation for AutoCloseable.
 
     public void close() throws IOException
@@ -203,7 +180,7 @@ implements   AutoCloseable
 
         String inputFileName  = args[argIndex++];
 
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputFileName))))
@@ -211,7 +188,7 @@ implements   AutoCloseable
             int counter = 0;
 
             LpcFrame frame;
-            while ((frame = lpcFrameInputStream.readFrame()) != null)
+            while ((frame = lpcFrameInput.readFrame()) != null)
             {
                 System.out.printf("#%03d (%.3f): %s%n",
                                   counter,

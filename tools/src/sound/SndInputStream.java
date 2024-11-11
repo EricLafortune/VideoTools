@@ -22,14 +22,11 @@ package sound;
 import java.io.*;
 
 /**
- * This class parses and returns a stream of data in our custom Sound
- * (.snd) format.
- *
- * This format contains an optimized stream of bytes with chunks that can be
- * sent to the video the sound processor (TMS9919 or SN76489).
+ * This SndInput returns raw data frames from an input stream in our custom
+ * Sound (.snd) format for the TMS9919 / SN76489 sound processor.
  */
 public class SndInputStream
-implements   SoundInputStream
+implements   SndInput
 {
     private final InputStream inputStream;
 
@@ -43,7 +40,7 @@ implements   SoundInputStream
     }
 
 
-    // Implementations for SoundInputStream.
+    // Implementations for SndInput.
 
     public byte[] readFrame() throws IOException
     {
@@ -69,15 +66,6 @@ implements   SoundInputStream
     }
 
 
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
-    }
-
-
     // Implementation for AutoCloseable.
 
     public void close() throws IOException
@@ -91,7 +79,7 @@ implements   SoundInputStream
      */
     public static void main(String[] args)
     {
-        try (SndInputStream sndInputStream =
+        try (SndInput sndInput =
                  new SndInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
@@ -99,7 +87,7 @@ implements   SoundInputStream
             int counter = 0;
 
             byte[] soundData;
-            while ((soundData = sndInputStream.readFrame()) != null && counter < 10000)
+            while ((soundData = sndInput.readFrame()) != null && counter < 10000)
             {
                 System.out.print(String.format("%4d: %2d bytes:", counter++, soundData.length));
 

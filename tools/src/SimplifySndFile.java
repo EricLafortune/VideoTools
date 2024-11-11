@@ -18,7 +18,6 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 import sound.*;
-import speech.LpcQuantization;
 
 import java.io.*;
 import java.util.*;
@@ -64,13 +63,13 @@ public class SimplifySndFile
         String inputFileName  = args[argIndex++];
         String outputFileName = args[argIndex++];
 
-        try (SndCommandInputStream sndCommandInputStream =
-                 new SndCommandInputStream(
+        try (SoundCommandInputStream sndCommandInputStream =
+                 new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputFileName)),
                  addSilenceCommands))
         {
-            try (SndCommandOutputStream sndCommandOutputStream =
+            try (SoundCommandOutput soundCommandOutput =
                      new SndCommandOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(outputFileName))))
@@ -232,7 +231,7 @@ public class SimplifySndFile
                     SoundCommand[] simplifiedCommands =
                         simplifiedCommandList.toArray(new SoundCommand[simplifiedCommandList.size()]);
 
-                    sndCommandOutputStream.writeSoundCommands(simplifiedCommands);
+                    soundCommandOutput.writeFrame(simplifiedCommands);
                 }
             }
         }

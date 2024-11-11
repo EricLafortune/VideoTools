@@ -20,16 +20,14 @@
 package display;
 
 import java.io.*;
-import java.util.*;
 import java.util.zip.*;
 
 /**
- * This DisplayInputStream reads its subsequent frames from an archive
- * stream in ZIP format that contains image files (PBM, PNG, GIF,...)
- * of 256x192 pixels.
+ * This DisplayInput reads its subsequent frames from an archive stream in
+ * ZIP format that contains image files (PBM, PNG, GIF,...) of 256x192 pixels.
  */
 public class ZipDisplayInputStream
-implements   DisplayInputStream
+implements   DisplayInput
 {
     private final ZipInputStream zipInputStream;
 
@@ -44,7 +42,7 @@ implements   DisplayInputStream
     }
 
 
-    // Implementations for DisplayInputStream.
+    // Implementations for DisplayInput.
 
     public Display readFrame() throws IOException
     {
@@ -81,15 +79,6 @@ implements   DisplayInputStream
     {
         zipInputStream.getNextEntry();
         zipInputStream.closeEntry();
-    }
-
-
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
     }
 
 

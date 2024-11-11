@@ -22,15 +22,15 @@ package speech;
 import java.io.*;
 
 /**
- * This InputStream wraps an LpcFrameInputStream, returning its speech as
+ * This InputStream wraps an LpcFrameInput, returning its speech as
  * signed 16-bits mono samples (little endian).
  */
 public class LpcSampleInputStream
 extends      InputStream
 implements   AutoCloseable
 {
-    private final LpcFrameInputStream lpcFrameInputStream;
-    private final TMS52xx             tms52xx;
+    private final LpcFrameInput lpcFrameInput;
+    private final TMS52xx       tms52xx;
 
     private short[] samples = new short[200];
     private int     offset  = Integer.MAX_VALUE;
@@ -49,29 +49,29 @@ implements   AutoCloseable
      *                            be the standard analog (8 bits) or digital
      *                            (10 bits) precision, or the full analog (12
      *                            bits) or digital (15 bits) precision.
-     * @param lpcFrameInputStream the input stream that provides LPC frames.
+     * @param lpcFrameInput       the input stream that provides LPC frames.
      */
-    public LpcSampleInputStream(LpcQuantization     lpcQuantization,
-                                boolean             digitalOutputRange,
-                                boolean             fullOutputPrecision,
-                                LpcFrameInputStream lpcFrameInputStream)
+    public LpcSampleInputStream(LpcQuantization lpcQuantization,
+                                boolean         digitalOutputRange,
+                                boolean         fullOutputPrecision,
+                                LpcFrameInput   lpcFrameInput)
     {
         this(new TMS52xx(lpcQuantization, digitalOutputRange, fullOutputPrecision),
-             lpcFrameInputStream);
+             lpcFrameInput);
     }
 
 
     /**
      * Creates a new instance.
-     * @param tms52xx             the speech synthesis chip (either TMS5200 or
-     *                            TMS5220, possibly simplified).
-     * @param lpcFrameInputStream the input stream that provides LPC frames.
+     * @param tms52xx       the speech synthesis chip (either TMS5200 or
+     *                      TMS5220, possibly simplified).
+     * @param lpcFrameInput the input stream that provides LPC frames.
      */
-    public LpcSampleInputStream(TMS52xx             tms52xx,
-                                LpcFrameInputStream lpcFrameInputStream)
+    public LpcSampleInputStream(TMS52xx       tms52xx,
+                                LpcFrameInput lpcFrameInput)
     {
         this.tms52xx             = tms52xx;
-        this.lpcFrameInputStream = lpcFrameInputStream;
+        this.lpcFrameInput = lpcFrameInput;
     }
 
 
@@ -82,7 +82,7 @@ implements   AutoCloseable
         // Read 200 new samples if necessary.
         if ((offset >>> 1) >= samples.length)
         {
-            LpcFrame lpcFrame = lpcFrameInputStream.readFrame();
+            LpcFrame lpcFrame = lpcFrameInput.readFrame();
             if (lpcFrame == null)
             {
                 return -1;
@@ -111,6 +111,6 @@ implements   AutoCloseable
 
     public void close() throws IOException
     {
-        lpcFrameInputStream.close();
+        lpcFrameInput.close();
     }
 }

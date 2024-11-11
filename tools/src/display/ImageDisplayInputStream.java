@@ -25,11 +25,11 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This DisplayInputStream reads its subsequent frames (often just one)
- * from an image file (PNG, GIF,...) of 256x192 pixels.
+ * This DisplayInput reads its subsequent frames (often just one) from an
+ * image file (PNG, GIF,...) of 256x192 pixels.
  */
 public class ImageDisplayInputStream
-implements   DisplayInputStream
+implements   DisplayInput
 {
     private static final int FRAME_HEIGHT = 192;
     private static final int FRAME_WIDTH  = 256;
@@ -99,7 +99,7 @@ implements   DisplayInputStream
     }
 
 
-    // Implementations for DisplayInputStream.
+    // Implementations for DisplayInput.
 
     public Display readFrame() throws IOException
     {
@@ -214,21 +214,6 @@ implements   DisplayInputStream
     }
 
 
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
-    }
-
-
     // Implementation for AutoCloseable.
 
     public void close() throws IOException
@@ -300,12 +285,12 @@ implements   DisplayInputStream
     public static void main(String[] args)
     throws IOException
     {
-        try (ImageDisplayInputStream displayInputStream =
+        try (DisplayInput displayInput =
                  new ImageDisplayInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
         {
-            Display display = displayInputStream.readFrame();
+            Display display = displayInput.readFrame();
 
             System.out.println("Screen image table:");
             for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)

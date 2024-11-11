@@ -85,38 +85,31 @@ public class ConvertWavToLpc
         boolean         trimSilenceFrames        = false;
         boolean         addStopFrame             = false;
 
-        while (true)
+        while (args[argIndex].startsWith("-"))
         {
-            String arg = args[argIndex];
-            if (!arg.startsWith("-"))
+            switch (args[argIndex++])
             {
-                break;
-            }
-
-            switch (arg)
-            {
+                case "-chip"                     -> quantization           = LpcQuantization.valueOf(args[argIndex++].toUpperCase());
                 case "-tms5200"                  -> quantization           = LpcQuantization.TMS5200;
                 case "-tms5220"                  -> quantization           = LpcQuantization.TMS5220;
-                case "-amplification"            -> amplification          = Double.parseDouble(args[++argIndex]);
-                case "-preemphasis"              -> preemphasis            = Double.parseDouble(args[++argIndex]);
-                case "-minfrequency"             -> minFrequency           = Double.parseDouble(args[++argIndex]);
-                case "-maxfrequency"             -> maxFrequency           = Double.parseDouble(args[++argIndex]);
-                case "-voicedthreshold"          -> voicedThreshold        = Double.parseDouble(args[++argIndex]);
-                case "-frameoversampling"        -> frameOversampling      = Integer.parseInt(args[++argIndex]);
-                case "-lpcwindowsize"            -> lpcWindowSize          = Integer.parseInt(args[++argIndex]);
+                case "-amplification"            -> amplification          = Double.parseDouble(args[argIndex++]);
+                case "-preemphasis"              -> preemphasis            = Double.parseDouble(args[argIndex++]);
+                case "-minfrequency"             -> minFrequency           = Double.parseDouble(args[argIndex++]);
+                case "-maxfrequency"             -> maxFrequency           = Double.parseDouble(args[argIndex++]);
+                case "-voicedthreshold"          -> voicedThreshold        = Double.parseDouble(args[argIndex++]);
+                case "-frameoversampling"        -> frameOversampling      = Integer.parseInt(args[argIndex++]);
+                case "-lpcwindowsize"            -> lpcWindowSize          = Integer.parseInt(args[argIndex++]);
                 case "-dontfixpitchoutliers"     -> fixPitchOutliers       = false;
                 case "-dontfixvoicedjittering"   -> fixVoicedJittering     = false;
                 case "-dontoptmizeframes"        -> optimizeFrames         = false;
-                case "-optimizationwindowsize"   -> optimizationWindowSize = Integer.parseInt(args[++argIndex]);
-                case "-linearpowershift"         -> linearPowerShift       = Double.parseDouble(args[++argIndex]);
+                case "-optimizationwindowsize"   -> optimizationWindowSize = Integer.parseInt(args[argIndex++]);
+                case "-linearpowershift"         -> linearPowerShift       = Double.parseDouble(args[argIndex++]);
                 case "-dontfixenergytransitions" -> fixEnergyTransitions   = false;
                 case "-dontfixclampedsamples"    -> fixClampedSamples      = false;
                 case "-trimsilenceframes"        -> trimSilenceFrames      = true;
                 case "-addstopframe"             -> addStopFrame           = true;
-                default                          -> throw new IllegalArgumentException("Unknown option [" + arg + "]");
+                default                          -> throw new IllegalArgumentException("Unknown option [" + args[argIndex-1] + "]");
             }
-
-            argIndex++;
         }
 
         String inputWavFileName  = args[argIndex++];
@@ -635,7 +628,7 @@ public class ConvertWavToLpc
             //    catch (IOException e)
             //    {
             //        e.printStackTrace();
-            //    };
+            //    }
             //};
             //new Thread(writeWav).start();
 
@@ -1317,7 +1310,7 @@ public class ConvertWavToLpc
         System.out.printf("# Iter #%d, frame #%d (%.3f) %s -> %s err=%.4f%n",
                           iteration,
                           frameCounter,
-                          frameCounter * TMS52xx.FRAME_SIZE / TMS52xx.FREQUENCY,
+                          frameCounter * TMS52xx.FRAME_SIZE / TMS52xx.SOUND_FREQUENCY,
                           frame.toString(),
                           nextFrame == null ? "same" : nextFrame.toString(),
                           minError);

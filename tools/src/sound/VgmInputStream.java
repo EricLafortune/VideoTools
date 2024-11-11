@@ -22,15 +22,15 @@ package sound;
 import java.io.*;
 
 /**
- * This class parses and returns a stream of data in Video Game Music (.vgm)
- * format. It ignores all header information, assuming the input only contains
- * SN76489 samples and wait commands. Each frame contains the sample data of
- * a given frame time (duration).
+ * This SndInput parses and returns raw data frames from an input stream in
+ * Video Game Music (.vgm) format. It ignores all header information, assuming
+ * the input only contains SN76489 samples and wait commands. Each frame
+ * contains the sample data of a given frame time (duration).
  *
  * @see https://vgmrips.net/wiki/VGM_Specification
  */
 public class VgmInputStream
-implements   SoundInputStream
+implements   SndInput
 {
     private static final boolean DEBUG = false;
 
@@ -78,7 +78,7 @@ implements   SoundInputStream
     }
 
 
-    // Implementations for SoundInputStream.
+    // Implementations for SndInput.
 
     public byte[] readFrame() throws IOException
     {
@@ -169,20 +169,7 @@ implements   SoundInputStream
     }
 
 
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
-    }
-
+    // Implementation for AutoCloseable.
 
     public void close() throws IOException
     {
@@ -195,7 +182,7 @@ implements   SoundInputStream
      */
     public static void main(String[] args)
     {
-        try (VgmInputStream vgmInputStream =
+        try (SndInput sndInput =
                  new VgmInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
@@ -203,7 +190,7 @@ implements   SoundInputStream
             int counter = 0;
 
             byte[] soundData;
-            while ((soundData = vgmInputStream.readFrame()) != null && counter < 10000)
+            while ((soundData = sndInput.readFrame()) != null && counter < 10000)
             {
                 System.out.print(String.format("%4d: %2d bytes:", counter++, soundData.length));
 

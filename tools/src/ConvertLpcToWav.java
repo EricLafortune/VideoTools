@@ -41,25 +41,18 @@ public class ConvertLpcToWav
         boolean         digitalOutputRange  = false;
         boolean         fullOutputPrecision = false;
 
-        while (true)
+        while (args[argIndex].startsWith("-"))
         {
-            String arg = args[argIndex];
-            if (!arg.startsWith("-"))
+            switch (args[argIndex++])
             {
-                break;
-            }
-
-            switch (arg)
-            {
+                case "-chip"    -> quantization        = LpcQuantization.valueOf(args[argIndex++].toUpperCase());
                 case "-tms5200" -> quantization        = LpcQuantization.TMS5200;
                 case "-tms5220" -> quantization        = LpcQuantization.TMS5220;
                 case "-analog"  -> digitalOutputRange  = false;
                 case "-digital" -> digitalOutputRange  = true;
                 case "-precise" -> fullOutputPrecision = true;
-                default         -> throw new IllegalArgumentException("Unknown option [" + arg + "]");
+                default         -> throw new IllegalArgumentException("Unknown option [" + args[argIndex-1] + "]");
             }
-
-            argIndex++;
         }
 
         String inputLpcFileName  = args[argIndex++];
@@ -68,13 +61,13 @@ public class ConvertLpcToWav
         // Count the number of LPC coefficient frames in the input file.
         int frameCount = 0;
 
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputLpcFileName))))
         {
             LpcFrame frame;
-            while ((frame = lpcFrameInputStream.readFrame()) != null)
+            while ((frame = lpcFrameInput.readFrame()) != null)
             {
                 frameCount++;
 
@@ -90,9 +83,7 @@ public class ConvertLpcToWav
         try (AudioInputStream audioInputStream =
                  new AudioInputStream(
                  new LpcSampleInputStream(quantization, digitalOutputRange, fullOutputPrecision,
-                 new LpcFrameInputStream(
-                 new BufferedInputStream(
-                 new FileInputStream(inputLpcFileName)))),
+                 lpcFrameInput(inputLpcFileName)),
                  new AudioFormat(8000f, 16, 1, true, false),
                  frameCount * TMS52xx.FRAME_SIZE))
         {
@@ -100,5 +91,23 @@ public class ConvertLpcToWav
                               AudioFileFormat.Type.WAVE,
                               new File(outputWavFileName));
         }
+    }
+
+
+    /**
+     * Returns an LpcFrameInput from the specified file in binary LPC format or
+     * our custom text LPC format.
+     */
+    private static LpcFrameInput lpcFrameInput(String fileName)
+    throws IOException
+    {
+        return fileName.endsWith(".lpc") ?
+            new LpcFrameInputStream(
+            new BufferedInputStream(
+            new FileInputStream(fileName))) :
+
+            new LpcFrameReader(
+            new BufferedReader(
+            new FileReader(fileName)));
     }
 }

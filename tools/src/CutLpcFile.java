@@ -68,7 +68,7 @@ public class CutLpcFile
         int    stopFrame         = Integer.parseInt(args[argIndex++]);
         String outputLpcFileName = args[argIndex++];
 
-        try (LpcFrameInputStream lpcFrameInputStream =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputLpcFileName))))
@@ -78,12 +78,12 @@ public class CutLpcFile
                      new BufferedOutputStream(
                      new FileOutputStream(outputLpcFileName))))
             {
-                lpcFrameInputStream.skipFrames(startFrame);
+                lpcFrameInput.skipFrames(startFrame);
 
                 for (int counter = startFrame; counter < stopFrame; counter++)
                 {
                     LpcFrame lpcFrame =
-                        lpcFrameInputStream.readFrame();
+                        lpcFrameInput.readFrame();
 
                     if (lpcFrame == null)
                     {

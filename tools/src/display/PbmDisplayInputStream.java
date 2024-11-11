@@ -23,11 +23,11 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This DisplayInputStream reads its subsequent frames (often just one)
- * from a PBM image file of 256x192 pixels.
+ * This DisplayInput reads its subsequent frames (often just one) from a PBM
+ * image file of 256x192 pixels.
  */
 public class PbmDisplayInputStream
-implements   DisplayInputStream
+implements   DisplayInput
 {
     private static final int FRAME_HEIGHT = 192;
     private static final int FRAME_WIDTH  = 256;
@@ -46,7 +46,7 @@ implements   DisplayInputStream
     }
 
 
-    // Implementations for DisplayInputStream.
+    // Implementations for DisplayInput.
 
     public Display readFrame() throws IOException
     {
@@ -108,21 +108,6 @@ implements   DisplayInputStream
     }
 
 
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
-    }
-
-
     // Implementation for AutoCloseable.
 
     public void close() throws IOException
@@ -176,12 +161,12 @@ implements   DisplayInputStream
      */
     public static void main(String[] args)
     {
-        try (PbmDisplayInputStream pbmDisplayInputStream =
+        try (DisplayInput displayInput =
                  new PbmDisplayInputStream(
                  new BufferedInputStream(
                  new FileInputStream(args[0]))))
         {
-            Display display = pbmDisplayInputStream.readFrame();
+            Display display = displayInput.readFrame();
 
             for (int sectionIndex = 0; sectionIndex < Display.SECTION_COUNT; sectionIndex++)
             {

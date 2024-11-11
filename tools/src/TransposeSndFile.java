@@ -99,13 +99,13 @@ public class TransposeSndFile
         String inputFileName  = args[argIndex++];
         String outputFileName = args[argIndex++];
 
-        try (SndCommandInputStream sndCommandInputStream =
-                 new SndCommandInputStream(
+        try (SoundCommandInputStream sndCommandInputStream =
+                 new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputFileName)),
                  addSilenceCommands))
         {
-            try (SndCommandOutputStream sndCommandOutputStream =
+            try (SoundCommandOutput soundCommandOutput =
                      new SndCommandOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(outputFileName))))
@@ -351,7 +351,7 @@ public class TransposeSndFile
                     SoundCommand[] simplifiedCommands =
                         simplifiedCommandList.toArray(new SoundCommand[simplifiedCommandList.size()]);
 
-                    sndCommandOutputStream.writeSoundCommands(simplifiedCommands);
+                    soundCommandOutput.writeFrame(simplifiedCommands);
                 }
             }
         }
@@ -407,8 +407,8 @@ public class TransposeSndFile
     private static int transposedFrequencyDivider(int    frequencyDivider,
                                                   double frequencyDividerFactor)
     {
-        return Integer.max(FrequencyCommand.MIN_DIVIDER,
-               Integer.min(FrequencyCommand.MAX_DIVIDER,
+        return Integer.max(FrequencyCommand.MIN_TONE_DIVIDER,
+               Integer.min(FrequencyCommand.MAX_TONE_DIVIDER,
                            (int)Math.round(frequencyDivider * frequencyDividerFactor)));
     }
 }
