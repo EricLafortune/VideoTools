@@ -26,23 +26,21 @@ where:
 ## Example
 
 For example, the first version of our
-[Bad Apple demo](https://github.com/EricLafortune/BadApple) 
-for the TI-99/4A tuned an LPC file with vocals to a an SND file with music: 
+[Bad Apple demo](https://github.com/EricLafortune/BadApple)
+for the TI-99/4A tuned an LPC file with vocals to a an SND file with music:
 
     java TuneLpcFile input.lpc input.snd,1454 0.5 300 535 output.lpc
 
-The parameters are typically based on trial and error. We're starting the SND 
+The parameters are typically based on trial and error. We're starting the SND
 file at its frame 1454, so the vocals and the music are synchronized. We're
 halving the frequencies to better match the frequencies of the speech
-synthesizer. We're limiting the resulting frequency range to a female voice of 
-300 to 535 Hz. 
+synthesizer. We're limiting the resulting frequency range to a female voice of
+300 to 535 Hz.
 
 ## Related tools
 
 * [ConvertWavToLpc](ConvertWavToLpc.md)
 * [ConvertPraatToLpc](ConvertPraatToLpc.md)
 * [CutLpcFile](CutLpcFile.md)
-* [ConvertVgmToSnd](ConvertVgmToSnd.md)
-* [SimplifySndFile](SimplifySndFile.md)
-* [CutSndFile](CutSndFile.md)
+* [ConvertLpcToWav](docs/ConvertLpcToWav.md)
 * [VideoTools](../README.md)

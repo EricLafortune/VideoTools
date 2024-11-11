@@ -9,12 +9,12 @@ and encoded for replay with TMSxxxx chips:
 * the video display processor TMS9918
 * the sound processor TMS9919/SN76489
 * the speech synthesizer TMS5200
-  
+
 The video tools contain a player for the TMS format, for the TI-99/4A.
 
 ## Usage
 
-    java ComposeVideo [options] [start_frame:]input.{pbm,gif,png,bmp,zip,vgm,snd,lpc}[,skip_frames] ... output.{tms,asm}
+    java ComposeVideo [options...] [start_frame:]input.{pbm,gif,png,bmp,zip,vgm,snd,lpc}[,skip_frames] ... output.{tms,asm}
 
 where:
 
@@ -35,11 +35,12 @@ where:
 
 The options are:
 
-|         |                                                                                            |
-|---------|--------------------------------------------------------------------------------------------|
-| `-ntsc` | Target a US system with a display refresh of 60 Hz (actually: 59.922738 Hz) (the default). |
-| `-pal`  | Target a European system with a display refresh of 50 Hz (actually: 50.158969 Hz).         |
- 
+|                                                |                                                                |
+|------------------------------------------------|----------------------------------------------------------------|
+| `-videofrequency NTSC\|PAL\|50Hz\|60Hz\|value` | Target the specified display refresh rate.                     |
+| `-ntsc`                                        | Short for `-videofrequency NTSC` (59.922738 Hz) (the default). |
+| `-pal`                                         | Short for `-videofrequency PAL` (50.158969 Hz).                |
+
 These options are only relevant for properly synchronizing the speech
 bitstream, which is always fixed at 40 fps.
 
@@ -55,33 +56,50 @@ Convert a WAV sound file to an LPC speech file
 
     java ConvertWavToLpc -tms5200 -minfrequency 50 -maxfrequency 250 speech.wav speech.lpc
 
-You can then combine animations, the music, and the speech in a single video file:
+You can then combine animations, the music, and the speech in a single video
+file:
 
-    java ComposeVideo animation.zip 100:music.snd 200:speech.lpc player/data/video.tms
-    
-In this example, we're starting the music at frame 100 and the speech at
+    java ComposeVideo animation.zip 100:music.snd 200:speech.lpc video.tms
+
+In this example, we're starting the music at frame (Vsync) 100 and the speech at
 frame 200. You can start multiple animations, music pieces, and speech fragments
-at different times.    
-    
-Finally, you can assemble the player with the video file embedded (with the
-[xdt99](https://github.com/endlos99/xdt99) tools), and package the code as an
-RPK cartridge file for the TI-99/4A:
+at different times.
+
+You can then package the video file with a small default player program in a
+cartridge:
+
+    java PackageVideoInCartridge \
+       -title 'MY MUSIC' \
+       -titlewithoutspeech 'INSTRUMENTAL' \
+       video.tms video.rpk
+
+Instead of an RPK file `music.rpk` for the Mame emulator, you can also create
+just a raw ROM file like `romc.bin`, for other emulators.
+
+Alternatively, if you want more control over the player code, you can assemble
+your own player with the video file embedded (with the
+[xdt99](https://github.com/endlos99/xdt99) tools), and package the program
+manually:
 
     cd player
     xas99.py --register-symbols --binary --output out/romc.bin src/player.asm
-    zip -q --junk-paths out/video.rpk layout.xml out/romc.bin
+    zip -q --junk-paths video.rpk layout.xml out/romc.bin
 
-You can run such an RPK file in the Mame emulator:
+Finally. you can then run the application from a RAM cartridge on the computer
+or in an emulator like Mame:
 
     mame ti99_4a \
       -nomouse -window -resolution 1024x768 -nounevenstretch \
       -ioport peb \
       -ioport:peb:slot3 speech \
-      -cart1 out/video.rpk
+      -cart1 video.rpk
 
 ## Related tools
 
+* [ConvertMusicXmlToSnd](ConvertMusicXmlToSnd.md)
 * [ConvertVgmToSnd](ConvertVgmToSnd.md)
+* [ConvertMusicXmlToLpc](ConvertMusicXmlToLpc.md)
 * [ConvertWavToLpc](ConvertWavToLpc.md)
 * [ConvertPraatToLpc](ConvertPraatToLpc.md)
+* [PackageVideoInCartridge](PackageVideoInCartridge.md)
 * [VideoTools](../README.md)

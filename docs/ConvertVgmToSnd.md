@@ -2,10 +2,10 @@
 
 ## Summary
 
-Extracts any TMS9919/SN76489 sound data from a file in [Video Game
+Extracts any TMS9919/SN76489 sound data from a chip tune in [Video Game
 Music](https://vgmrips.net/wiki/VGM_Specification) format to a file in our
-binary [SND format](SndFileFormat.md). Our SND format is optimized for replay
-with TMS9919/SN76489 sound chips.
+binary [SND format](SndFileFormat.md), for replay with TMS9919/SN76489 sound
+chips.
 
 ## Usage
 
@@ -23,37 +23,41 @@ where:
 
 Convert a VGM file to an SND file, targeting 60 fps:
 
-    java ConvertVgmToSnd 735 input.wav output.snd
+    java ConvertVgmToSnd 735 music.vgm music.snd
 
-For efficiency, you can simplify the SND file, and at the same time make sure 
+For efficiency, you can simplify the SND file, and at the same time make sure
 all sound generators are silenced at the end:
 
-    java SimplifySndFile -addsilencecommands output.snd simplified.snd
+    java SimplifySndFile -addsilencecommands music.snd simplified.snd
 
-You can then embed the SND data in an executable cartridge for the TI-99/4A.
-First create a video file, in this case only containing the music:
+You can convert the SND commands to a WAV sound file, in order to quickly check
+the quality of the results in any audio player:
 
-    java ComposeVideo simplified.snd player/data/video.tms
-    
-Then assemble the player with the video file embedded (with the
-[xdt99](https://github.com/endlos99/xdt99) tools), and package the code as an
-RPK cartridge file:
+    java ConvertSndToWav -framefrequency NTSC simplified.snd music.wav
 
-    cd player
-    xas99.py --register-symbols --binary --output out/romc.bin src/player.asm
-    zip -q --junk-paths out/video.rpk layout.xml out/romc.bin
+If you're happy with the results, you can embed the SND commands in an
+executable cartridge for the TI-99/4A. First create a TMS video file, in this
+example only containing the music:
 
-You can run such an RPK file in the Mame emulator:
+    java ComposeVideo -ntsc simplified.snd music.tms
 
-    mame ti99_4a \
-      -nomouse -window -resolution 1024x768 -nounevenstretch \
-      -ioport peb \
-      -ioport:peb:slot3 speech \
-      -cart1 out/video.rpk
+Then package the video file with a small default player program in a cartridge:
+
+    java PackageVideoInCartridge -title 'MY MUSIC' music.tms music.rpk
+
+Instead of an RPK file `music.rpk` for the Mame emulator, you can also create
+just a raw ROM file like `romc.bin`, for other emulators.
+
+You can then run the application from a RAM cartridge on the computer or in an
+emulator like Mame:
+
+    mame ti99_4a -ioport peb -ioport:peb:slot3 speech -cart1 music.rpk
 
 ## Related tools
 
 * [SimplifySndFile](SimplifySndFile.md)
 * [CutSndFile](CutSndFile.md)
+* [ConvertMusicXmlToSnd](docs/ConvertMusicXmlToSnd.md)
 * [ComposeVideo](ComposeVideo.md)
+* [PackageVideoInCartridge](PackageVideoInCartridge.md)
 * [VideoTools](../README.md)

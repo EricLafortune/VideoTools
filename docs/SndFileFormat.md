@@ -16,7 +16,10 @@ specialized players.
 
 ## Related tools
 
-* [ConvertVgmToSnd](ConvertVgmToSnd.md)
+* [ConvertMusicXmlToSnd](docs/ConvertMusicXmlToSnd.md)
+* [ConvertVgmToSnd](docs/ConvertVgmToSnd.md)
 * [CutSndFile](CutSndFile.md)
 * [SimplifySndFile](SimplifySndFile.md)
+* [TransposeSndFile](TransposeSndFile.md)
+* [ConvertSndToWav](docs/ConvertSndToWav.md)
 * [VideoTools](../README.md)

@@ -36,7 +36,10 @@ between binary and text with the video tools
 
 ## Related tools
 
+* [ConvertMusicXmlToLpc](docs/ConvertMusicXmlToLpc.md)
 * [ConvertWavToLpc](ConvertWavToLpc.md)
+* [ConvertPraatToLpc](docs/ConvertPraatToLpc.md)
 * [ConvertLpcToText](ConvertLpcToText.md)
 * [ConvertTextToLpc](ConvertTextToLpc.md)
+* [ConvertLpcToWav](docs/ConvertLpcToWav.md)
 * [VideoTools](../README.md)

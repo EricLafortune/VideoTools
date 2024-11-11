@@ -22,10 +22,11 @@ You can download the latest binary version from Github:
   the video tools.
 * The [source
   code](https://github.com/EricLafortune/VideoTools/tree/master/player/src)
-  of the video player, to be assembled with a video.
+  of the video player.
 
 ## Building
 
+If you prefer, you can build the tools and the player yourself.
 On Linux, you can run the build script:
 
     ./build.sh
@@ -58,48 +59,68 @@ systems and 25 fps on European systems.
 
 ### Preparing music
 
-The canonical input format for music is our optimized SND format for the
-TMS9919/SN76489 processors. The target sound frame rate for the video player
-is fixed at 60 fps on US systems and 50 fps on European systems.
+The canonical input format for music is our optimized
+[SND format](docs/SndFileFormat.md) for the TMS9919/SN76489 processors. The
+target sound frame rate for the video player is fixed at 60 fps on US
+systems and 50 fps on European systems.
 
-* [ConvertVgmToSnd](docs/ConvertVgmToSnd.md): convert a VGM file to an SND file.
+* [ConvertMusicXmlToSnd](docs/ConvertMusicXmlToSnd.md): convert a MusicXML
+  file to an SND file.
+* [ConvertVgmToSnd](docs/ConvertVgmToSnd.md): convert a VGM file to an SND
+  file.
 * [CutSndFile](docs/CutSndFile.md): copy a section from an SND file.
-* [SimplifySndFile](docs/SimplifySndFile.md): simplify the sound commands in an
-  SND file.
-* [TransposeSndFile](docs/TransposeSndFile.md): transpose the frequencies in an
-  SND file.
+* [SimplifySndFile](docs/SimplifySndFile.md): simplify the sound commands in
+  an SND file.
+* [TransposeSndFile](docs/TransposeSndFile.md): transpose the frequencies in
+  an SND file.
+* [ConvertSndToWav](docs/ConvertSndToWav.md): convert an SND file to a WAV
+  file, by simulating a sound chip.
 
-### Preparing speech
+### Preparing speech and vocals
 
 The canonical input format for speech and vocals is our binary
-Linear Predictive Coding (LPC) format for the TMS52xx speech synthesizer. 
+[Linear Predictive Coding (LPC) format](docs/LpcFileFormat.md) for the TMS52xx
+speech synthesizer.
 
 * [ConvertWavToLpc](docs/ConvertWavToLpc.md): convert a WAV file to a binary
   LPC file.
-* [ConvertLpcToWav](docs/ConvertLpcToWav.md): convert a binary LPC file to a
-  WAV file.
 * [ConvertPraatToLpc](docs/ConvertPraatToLpc.md): convert Praat Pitch/LPC files
   to a binary LPC file.
+* [ConvertMusicXmlToLpc](docs/ConvertMusicXmlToLpc.md): convert a MusicXML
+  file to an LPC file humming to the tune.
+* [CutLpcFile](docs/CutLpcFile.md): copy a section from a binary LPC file.
+* [TuneLpcFile](docs/TuneLpcFile.md): tune a binary LPC speech file to the
+  frequencies in a synchronized SND music file.
 * [ConvertLpcToText](docs/ConvertLpcToText.md): convert a binary LPC file to a
   text LPC file.
 * [ConvertTextToLpc](docs/ConvertTextToLpc.md): convert a text LPC file to a
   binary LPC file.
-* [CutLpcFile](docs/CutLpcFile.md): copy a section from a binary LPC file.
-* [TuneLpcFile](docs/TuneLpcFile.md): tune the a binary LPC speech file to the
-  frequencies in a synchronized SND music file.
+* [ConvertLpcToWav](docs/ConvertLpcToWav.md): convert an LPC file to a WAV
+  file, by simulating a speech synthesis chip.
 
 ### Composing final videos
 
-The final format suitable for our player is our optimized TMS format. It
-contains the combination of animations, music, and speech.
+The final format suitable for our player is our optimized
+[TMS format](docs/TmsFileFormat.md). It contains the combination of animations,
+music, and speech.
 
 * [ComposeVideo](docs/ComposeVideo.md): merge and compress images, animations,
   music, and speech in the above formats in a TMS file.
 
-You can then assemble the player and the video file in a single cartridge file
-for the TI-99/4A:
+### Packaging videos in cartridge ROMs
 
-    xas99 --register-symbols --binary --output out/romc.bin player/src/player.asm
+You can package the video file along with a standard player in a standard
+ROM (with multiple memory banks) for the TI-99/4A.
+
+* [PackageVideoInCartridge](docs/PackageVideoInCartridge.md): package a TMS
+  video file in an RPK cartridge or BIN ROM.
+
+Alternatively, if you want more control over the video player, you can
+assemble it yourself with the [xdt99](https://github.com/endlos99/xdt99) tools.
+The video file gets hardcoded inside the resulting binary.
+
+    cd player
+    xas99.py --register-symbols --binary --output out/romc.bin src/player.asm
 
 The frame rate of the player is synchronized to the vertical sync of the
 display, which is 60 Hz on US systems and 50 Hz on European systems.
@@ -108,29 +129,30 @@ display, which is 60 Hz on US systems and 50 Hz on European systems.
 
 By default, the video player in this project is assembled with a small demo
 video, consisting of a static title screen and a speech snippet ("hello").
-You can see how it is created in `player/build.sh`. 
+You can see how it is created in `player/build.sh`.
 
 ## Running the video player
 
-The easiest way is to use the Mame emulator.
+The easiest way is to use an emulator, such as Mame.
 
 On Linux, you can run the script to launch Mame with the proper options:
 
     ./run.sh
 
-Alternatively, you can run the Mame command manually. 
+Alternatively, you can run the Mame command manually.
 
 Once Mame is running and showing the TI-99/4A home screen:
 
 1. Press any key.
-2. Press `2` for "VIDEO" or `3` for "VIDEO WITH SPEECH".
+2. Press <kbd>2</kbd> for "VIDEO WITH SPEECH" or <kbd>3</kbd> for "VIDEO
+   WITHOUT SPEECH".
 
-You can exit Mame by pressing `Insert` and then `Esc`.
+You can exit Mame by pressing <kbd>Scroll Lock</kbd> and then <kbd>Esc</kbd>.
 
 ## Larger example
 
 My open source [Bad Apple demo](https://github.com/EricLafortune/BadApple/)
-for the TI-99/4A creates a complete video. The build script uses all the
+for the TI-99/4A creates a complete video. The build script uses many of the
 video tools.
 
 * It transforms the original Bad Apple video, music and vocals in traditional

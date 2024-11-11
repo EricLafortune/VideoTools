@@ -9,7 +9,7 @@ have been converted from VGM music files may benefit.
 
 ## Usage
 
-    java SimplifySndFile [options] input.snd output.snd
+    java SimplifySndFile [options...] input.snd output.snd
 
 where:
 

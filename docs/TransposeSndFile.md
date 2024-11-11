@@ -10,7 +10,7 @@ noise feedback shift register widths (e.g. TI-99/4A and Sega Master System).
 
 ## Usage
 
-    java TransposeSndFile [options] input.snd output.snd
+    java TransposeSndFile [options...] input.snd output.snd
 
 where:
 
@@ -40,8 +40,8 @@ noise generator are:
 | `-silenceconflictingnoisegenerator`                                                    | Suppress the noise generator.                |
 
 The default is to transpose the loudest generator correctly, possibly leaving
-the other generator out of tune. 
- 
+the other generator out of tune.
+
 ## Example
 
 Transpose an SND file from the Sega Master System to the TI-99/4A, reducing

@@ -15,17 +15,17 @@ back.
 
 where:
 
-|              |                                                                                                         |
-|--------------|---------------------------------------------------------------------------------------------------------|
-| _input.lpc_  | The input file containing the encoded binary stream of LPC frames for TMS52xx speech synthesizer chips. |
-| _output.txt_ | The output file containing the same data in readable text format.                                       |
+|              |                                                                                                          |
+|--------------|----------------------------------------------------------------------------------------------------------|
+| _input.lpc_  | The input file containing the encoded binary stream of LPC frames for TMS52xx speech synthesis chips. |
+| _output.txt_ | The output file containing the same data in readable text format.                                        |
 
 ## Example
 
 Convert previously computed LPC coefficients to a readable format:
 
     java ConvertLpcToText input.lpc output.txt
-    
+
 ## Related tools
 
 * [ConvertTextToLpc](ConvertTextToLpc.md)

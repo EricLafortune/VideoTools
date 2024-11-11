@@ -5,7 +5,7 @@
 Converts an audio file in WAV format to a speech file in our [binary LPC
 format](LpcFileFormat.md), containing linear predictive coding coefficients.
 Our LPC format is optimized for replay with the TMS5200/TMS5220 speech
-synthesizer chips.
+synthesis chips.
 
 ## Technical features
 
@@ -44,15 +44,16 @@ where:
 
 The basic options are:
 
-|                           |                                                                                                      |
-|---------------------------|------------------------------------------------------------------------------------------------------|
-| `-tms5200`                | Compute LPC coefficients for the TMS5200 speech synthesizer chip (the default).                      |
-| `-tms5220`                | Compute LPC coefficients for the TMS5220 speech synthesizer chip.                                    |
-| `-amplification` _factor_ | Amplify the input sound file by the given factor (default = 0.9373).                                 |
-| `-minfrequency` _value_   | Set the minimum allowed frequency in the output LPC coefficients, expressed in Hz (default = 30.0).  |
-| `-maxfrequency` _value_   | Set the maximum allowed frequency in the output LPC coefficients, expressed in Hz (default = 600.0). |
-| `-trimsilenceframes`      | Trim any LPC silence frames from the start and end of the output.                                    |
-| `-addstopframe`           | Add a stop frame to the LPC frames in the output.                                                    |
+|                           |                                                                                                                  |
+|---------------------------|------------------------------------------------------------------------------------------------------------------|
+| `-chip` _name_            | Target the specified speech synthesis chip: one of `TMS5100`, `TMS5110A`. `TMS5200` (the default), or `TMS5220`. |
+| `-tms5200`                | Short for `-chip TMS5200` (the default).                                                                         |
+| `-tms5220`                | Short for `-chip TMS5220`.                                                                                       |
+| `-amplification` _factor_ | Amplify the input sound file by the given factor (default = 0.9373).                                             |
+| `-minfrequency` _value_   | Set the minimum allowed frequency in the output LPC coefficients, expressed in Hz (default = 30.0).              |
+| `-maxfrequency` _value_   | Set the maximum allowed frequency in the output LPC coefficients, expressed in Hz (default = 600.0).             |
+| `-trimsilenceframes`      | Trim any LPC silence frames from the start and end of the output.                                                |
+| `-addstopframe`           | Add a stop frame to the LPC frames in the output.                                                                |
 
 Advanced options are:
 
@@ -64,7 +65,7 @@ Advanced options are:
 | `-dontfixvoicedjittering`         | Disable the processing step that finds and fixes jittering between voiced and unvoiced frames. Notably spurious unvoiced frames sound like loud pops.                                                                                                                                                                                                                                                                           |
 | `-lpcwindowsize` _value_          | Set the sliding window size over which to compute the initial LPC coefficients for a frame of 200 samples, expressed as a number of samples (default = 512). Smaller values typically result in slightly crispier but also more noisy speech. Larger values typically result in smoother but also more slurred speech.                                                                                                          |
 | `-frameoversampling` _count_      | Set the number of smaller steps for computing LPC coefficients for each frame of 200 samples, eventually picking the best matches (default = 1, other values could be 2, 3,...) In theory, trying to match a few slightly shifted sliding frames should lead to better coefficients, especially when the sound switches between voiced and unvoiced. In practice, our implementation doesn't seem to make much of a difference. |
-| `-dontoptmizeframes`              | Disable the processing step that optimizes the initial frames found with a traditional LPC algorithm. This step refines the LPC parameters with a smaller window size, based on a simulation of the TMS52xx speech synthesizer chip.                                                                                                                                                                                            |
+| `-dontoptmizeframes`              | Disable the processing step that optimizes the initial frames found with a traditional LPC algorithm. This step refines the LPC parameters with a smaller window size, based on a simulation of the TMS52xx speech synthesis chip.                                                                                                                                                                                              |
 | `-optimizationwindowsize` _value_ | Set the window size over which to optimize the initial LPC coefficients for each frame of 200 samples, expressed as a number of samples (default = 256). Again, smaller values typically result in slightly crispier but also more noisy speech. Larger values typically result in smoother but also more slurred speech.                                                                                                       |
 | `-linearpowershift` _value_       | Set the term added to power spectra before taking their logarithms (default = 0.1). A larger shift makes the optimization algorithms more linear than logarithmic. In theory, a logarithic scale is more perceptual. In our experience, a purely logarithmic approach more easily leads to upward outliers that may manifest themselves as loud pops.                                                                           |
 | `-dontfixenergytransitions`       | Disable the processing step that fixes transitions from high-energy unvoiced frames to voiced frames. The TMS52xx speech synthesizer may play such transitions as loud pops, due to its simplified internal interpolation.                                                                                                                                                                                                      |
@@ -99,37 +100,38 @@ the speech sound too slurred, you could try decreasing the window sizes.
 Convert a sound file with male speech to a file with LPC coefficients for the
 TMS5200 speech synthesizer:
 
-    java ConvertWavToLpc -tms5200 -minfrequency 50 -maxfrequency 250 input.wav output.lpc
+    java ConvertWavToLpc -tms5200 -minfrequency 50 -maxfrequency 250 speech.wav speech.lpc
 
 Then convert the LPC coefficients back to a sound file, in order to check the
 quality of the results:
 
-    java ConvertLpcToWav -tms5200 -analog -precise output.lpc output.wav
-    
+    java ConvertLpcToWav -tms5200 -analog -precise speech.lpc check.wav
+
+You can convert the LPC coefficients to a WAV sound file, in order to quickly
+check the quality of the speech in any audio player:
+
+    java ConvertLpcToWav -tms5200 -analog -precise speech.lpc check.wav
+
 We're choosing the common analog dynamic range, but with a full 16-bit
-precision, so we can identify any artifacts more easily. You can play the file
-with any audio player.
+precision, so we can identify any artifacts more easily.
 
-You can also embed the LPC speech in an executable cartridge for the TI-99/4A.
-First create a video file, in this case only containing the speech:
+If you're happy with the results, you can embed the LPC speech in an executable
+cartridge for the TI-99/4A. First create a TMS video file, in this example only
+containing the speech:
 
-    java ComposeVideo output.lpc player/data/video.tms
-    
-Then assemble the player with the video file embedded (with the
-[xdt99](https://github.com/endlos99/xdt99) tools), and package the code as an
-RPK cartridge file:
+    java ComposeVideo -ntsc speech.lpc speech.tms
 
-    cd player
-    xas99.py --register-symbols --binary --output out/romc.bin src/player.asm
-    zip -q --junk-paths out/video.rpk layout.xml out/romc.bin
+Then package the video file with a small default player program in a cartridge:
 
-You can run such an RPK file in the Mame emulator:
+    java PackageVideoInCartridge -title 'MY SONG' speech.tms speech.rpk
 
-    mame ti99_4a \
-      -nomouse -window -resolution 1024x768 -nounevenstretch \
-      -ioport peb \
-      -ioport:peb:slot3 speech \
-      -cart1 out/video.rpk
+Instead of an RPK file `speech.rpk` for the Mame emulator, you can also create
+just a raw ROM file like `romc.bin`, for other emulators.
+
+You can then run the application from a RAM cartridge on the computer or in an
+emulator like Mame:
+
+    mame ti99_4a -ioport peb -ioport:peb:slot3 speech -cart1 song.rpk
 
 ## Related tools
 
@@ -139,6 +141,7 @@ You can run such an RPK file in the Mame emulator:
 * [CutLpcFile](CutLpcFile.md)
 * [ConvertLpcToText](ConvertLpcToText.md)
 * [ComposeVideo](ComposeVideo.md)
+* [PackageVideoInCartridge](PackageVideoInCartridge.md)
 * [VideoTools](../README.md)
 
 ## Alternatives
@@ -176,4 +179,4 @@ You can run such an RPK file in the Mame emulator:
 * [python_wizard: Reflector.py](https://github.com/ptwz/python_wizard/blob/master/pywizard/Reflector.py),
   ptwz.
 * [Praat: Sound_and_LPC.cpp](https://github.com/praat/praat/blob/master/LPC/Sound_and_LPC.cpp),
-  David Weenink, Phonetic Sciences, University of Amsterdam. 
+  David Weenink, Phonetic Sciences, University of Amsterdam.

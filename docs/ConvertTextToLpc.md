@@ -12,10 +12,10 @@ format](LpcFileFormat.md).
 
 where:
 
-|              |                                                                                                          |
-|--------------|----------------------------------------------------------------------------------------------------------|
-| _input.txt_  | The input file containing the LPC frames for TMS52xx speech synthesizer chips in a readable text format. |
-| _output.lpc_ | The output file containing the same data as an encoded binary stream.                                    |
+|              |                                                                                                        |
+|--------------|--------------------------------------------------------------------------------------------------------|
+| _input.txt_  | The input file containing the LPC frames for TMS52xx speech synthesis chips in a readable text format. |
+| _output.lpc_ | The output file containing the same data as an encoded binary stream.                                  |
 
 ## Example
 
@@ -23,13 +23,13 @@ Convert previously computed LPC coefficients from a binary stream to a
 readable format:
 
     java ConvertLpcToText input.lpc output.txt
-    
+
 You can then edit the text file, for example duplicating frames, changing
 pitches, cleaning up unwanted frames, or concatenating files. You can convert
 the text file back to binary format with this tool:
 
     java ConvertTextToLpc input.txt output.lpc
-    
+
 ## Related tools
 
 * [ConvertLpcToText](ConvertLpcToText.md)
