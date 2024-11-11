@@ -17,28 +17,30 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-import speech.LpcInputStream;
-import sound.*;
+
 import display.*;
+import sound.*;
+import speech.*;
 import video.*;
 
 import java.io.*;
-import java.util.*;
+import java.util.Arrays;
 
 /**
  * This utility combines animation files (.pbm, .png, .gif, .jpg, .bmp, .zip),
  * sound files (.vgm, .snd), and speech files (.lpc) in a single file (.tms).
  *
  * Usage:
- *     java ComposeVideo [-ntsc|-pal] [offset:]input.{zip|vgm|snd|lpc}[,skip] ... output.tms
+ *     java ComposeVideo [options] [offset:]input.{zip|vgm|snd|lpc}[,skip] ... output.tms
  *
- * where
+ * where the options are:
  *     -ntsc  specifies a US target system with a display refresh of
  *            60 Hz (actually: 59.922738 Hz) (the default) (only for properly
  *            synchronizing the speech bitstream, fixed at 40 fps).
  *     -pal   specifies a European target system with a display refresh of
- *            50 Hz (actually: 50.158969 Hz) (only for properly synchronizing
- *            the speech bitstream, fixed at 40 fps).
+ *            50 Hz (actually: 50.158969 Hz).
+ *     -videofrequency <framerate> specifies any display refresh rate.
+ * The input modifiers are:
  *     offset is the start frame (50 Hz) of the input file in the output.
  *     skip   is the number of leading frames to skip in the input file.
  *
@@ -53,41 +55,36 @@ public class ComposeVideo
 {
     private static final int BANK_SIZE = 8 * 1024;
 
-    // We'll tweak the assumed video frequencies slightly to reduce the risk
-    // of feeding the speech buffer too slowly, eventually underflowing it,
-    // e.g. due to complex animations and missed Vsyncs. The speech synthesizer
-    // temporarily halts the CPU if the CPU tries to overflow the speech buffer
-    // (no big problem), but it exits the SPEAK_EXTERNAL mode if the speech
-    // buffer underflows (leading to garbled speech).
+    private static final double NTSC_FREQUENCY = SN76496.NTSC_FRAME_FREQUENCY;
+    private static final double PAL_FREQUENCY  = SN76496.PAL_FRAME_FREQUENCY;
+
+    // We increase the theoretical speech frequency slightly, to feed the
+    // speech buffer slightly too fast. If we feed the speech buffer too
+    // slowly, e.g. due to complex animations and missed Vsyncs, it eventually
+    // underflows. The speech synthesizer temporarily halts the CPU if the CPU
+    // tries to overflow the speech buffer (no big problem), but it exits the
+    // SPEAK_EXTERNAL mode if the speech buffer underflows (leading to garbled
+    // speech).
     private static final double EPSILON = 0.01;
 
-    private static final double NTSC_FREQUENCY = 59.922738 - EPSILON;
-    private static final double PAL_FREQUENCY  = 50.158969 - EPSILON;
-    private static final double LPC_FREQUENCY  = 40.0;
+    private static final double LPC_FREQUENCY  = 40.0 + EPSILON;
 
 
     public static void main(String[] args)
     throws IOException
     {
+        double videoFrequency = NTSC_FREQUENCY;
+
         // Parse any options.
         int argIndex = 0;
 
-        // We'll fill the speech buffer at 40 Hz.
-        double videoFrequency = NTSC_FREQUENCY;
-
-        if (args[argIndex].equals("-pal") ||
-            args[argIndex].equals("-50Hz"))
+        while (args[argIndex].startsWith("-"))
         {
-            // PAL system at ~50 Hz (Europe).
-            videoFrequency = PAL_FREQUENCY;
-            argIndex++;
-        }
-        else if (args[argIndex].equals("-ntsc") ||
-                 args[argIndex].equals("-60Hz"))
-        {
-            // NTSC system at ~60 Hz (US).
-            videoFrequency = NTSC_FREQUENCY;
-            argIndex++;
+            videoFrequency = videoFrequency(switch (args[argIndex++])
+            {
+                case "-videofrequency" -> args[argIndex++].toUpperCase();
+                default                -> args[argIndex-1].substring(1).toUpperCase();
+            });
         }
 
         // Collect the input files name, sorted on their start frame indices.
@@ -96,9 +93,9 @@ public class ComposeVideo
 
         // Start reading from the input files, merging data from the input
         // streams into the video output stream.
-        DisplayInputStream displayInputStream = null;
-        SoundInputStream   soundInputStream   = null;
-        LpcInputStream     lpcInputStream     = null;
+        DisplayInput displayInput = null;
+        SndInput     sndInput     = null;
+        LpcInput     lpcInput     = null;
 
         try (VideoOutputStream videoOutputStream =
                  createVideoOutputStream(outputFileName))
@@ -113,11 +110,14 @@ public class ComposeVideo
             int soundFrameCount   = 0;
             int speechFrameCount  = 0;
 
+            int speechStartVsync    = 0;
+            int speechSuppressCount = 0;
+
             // Create output frames as long as we have any input.
             while (inputFileIndex < inputFiles.length ||
-                   displayInputStream != null         ||
-                   soundInputStream   != null         ||
-                   lpcInputStream     != null         ||
+                   displayInput != null               ||
+                   sndInput     != null               ||
+                   lpcInput     != null               ||
                    !displayOutputStream.readyToWriteDisplayDelta1())
             {
                 // Open new files for which we've reached the start frame.
@@ -139,107 +139,146 @@ public class ComposeVideo
                     // name extension.
                     if (inputFileName.endsWith(".zip"))
                     {
-                        if (displayInputStream != null)
+                        if (displayInput != null)
                         {
-                            displayInputStream.close();
+                            displayInput.close();
                         }
 
-                        displayInputStream =
+                        displayInput =
                             new ZipDisplayInputStream(
                             new BufferedInputStream(
                             new FileInputStream(inputFileName)));
 
-                        displayInputStream.skipFrames(skipCount);
+                        displayInput.skipFrames(skipCount);
                     }
                     if (inputFileName.endsWith(".pbm"))
                     {
-                        if (displayInputStream != null)
+                        if (displayInput != null)
                         {
-                            displayInputStream.close();
+                            displayInput.close();
                         }
 
-                        displayInputStream =
+                        displayInput =
                             new PbmDisplayInputStream(
                             new BufferedInputStream(
                             new FileInputStream(inputFileName)));
 
-                        displayInputStream.skipFrames(skipCount);
+                        displayInput.skipFrames(skipCount);
                     }
                     if (inputFileName.endsWith(".png") ||
                         inputFileName.endsWith(".gif") ||
                         inputFileName.endsWith(".jpg") ||
                         inputFileName.endsWith(".bmp"))
                     {
-                        if (displayInputStream != null)
+                        if (displayInput != null)
                         {
-                            displayInputStream.close();
+                            displayInput.close();
                         }
 
-                        displayInputStream =
+                        displayInput =
                             new ImageDisplayInputStream(
                             new BufferedInputStream(
                             new FileInputStream(inputFileName)));
 
-                        displayInputStream.skipFrames(skipCount);
+                        displayInput.skipFrames(skipCount);
                     }
                     else if (inputFileName.endsWith(".vgm"))
                     {
-                        if (soundInputStream != null)
+                        if (sndInput != null)
                         {
-                            soundInputStream.close();
+                            sndInput.close();
                         }
 
-                        soundInputStream =
+                        sndInput =
                             new VgmInputStream(
                             new BufferedInputStream(
                             new FileInputStream(inputFileName)));
 
-                        soundInputStream.skipFrames(skipCount);
+                        sndInput.skipFrames(skipCount);
                     }
                     else if (inputFileName.endsWith(".snd"))
                     {
-                        if (soundInputStream != null)
+                        if (sndInput != null)
                         {
-                            soundInputStream.close();
+                            sndInput.close();
                         }
 
-                        soundInputStream =
+                        sndInput =
                             new SndInputStream(
                             new BufferedInputStream(
                             new FileInputStream(inputFileName)));
 
-                        soundInputStream.skipFrames(skipCount);
+                        sndInput.skipFrames(skipCount);
                     }
                     else if (inputFileName.endsWith(".lpc"))
                     {
-                        if (lpcInputStream != null)
+                        if (lpcInput != null)
                         {
-                            lpcInputStream.close();
+                            lpcInput.close();
                         }
 
-                        lpcInputStream =
+                        lpcInput =
                             new LpcInputStream(
                             new BufferedInputStream(
                             new FileInputStream(inputFileName)),
                             true);
 
-                        lpcInputStream.skipFrames(skipCount);
+                        lpcInput.skipFrames(skipCount);
 
-                        // Already start filling the 16-byte speech buffer
-                        // with up to 7 bytes of speech data, so we reduce
-                        // the risk of a buffer underflow.
-                        byte[] speechData = lpcInputStream.readFrame();
-                        if (speechData != null)
-                        {
-                            videoOutputStream.writeSpeechData(speechData);
+                        // Already start filling the 16-byte speech buffer,
+                        // to get the speech started (after the initial
+                        // SPEAK_EXTERNAL byte, then the 9th LPC byte, then
+                        // another 50 microseconds) and to then reduce the
+                        // risk of a buffer underflow.
+                        // We'll suppress these first speech frames in their
+                        // regular slots later on.
+                        // If we can write 2 speech frames now, 1 will be
+                        // playing and 1 will still be in the buffer by the
+                        // time the first regular slot comes up, so we don't
+                        // want to suppress any slots in that case.
+                        speechStartVsync    = videoOutputStream.getVsyncCount();
+                        speechSuppressCount = -2;
 
-                            speechFrameCount++;
-                        }
-                        else
+                        // Collect multiple initial speech frames in a single
+                        // buffer.
+                        byte[] speechBuffer      = new byte[17];
+                        int    speechBufferCount = 0;
+                        while (speechBufferCount < 1 + 10)
                         {
-                            lpcInputStream.close();
-                            lpcInputStream = null;
+                            // The first speech frame starts with the
+                            // SPEAK_EXTERNAL byte.
+                            // A standard speech frame can be between 0 bytes
+                            // (4 bits for a silence that was already included
+                            // in the previous frame) and 7 bytes (50 bits for
+                            // a voiced frame).
+                            byte[] speechData = lpcInput.readFrame();
+                            if (speechData != null)
+                            {
+                                System.arraycopy(speechData,
+                                                 0,
+                                                 speechBuffer,
+                                                 speechBufferCount,
+                                                 speechData.length);
+
+                                speechBufferCount += speechData.length;
+
+                                speechSuppressCount++;
+
+                                speechFrameCount++;
+                            }
+                            else
+                            {
+                                lpcInput.close();
+                                lpcInput = null;
+                                break;
+                            }
                         }
+
+                        // Write the collected initial speech data.
+                        byte[] speechData =
+                            Arrays.copyOf(speechBuffer, speechBufferCount);
+
+                        videoOutputStream.writeSpeechData(speechData);
                     }
 
                     inputFileIndex++;
@@ -250,9 +289,9 @@ public class ComposeVideo
                 if (displayOutputStream.readyToWriteDisplayDelta1())
                 {
                     // See if we can get a new animation frame.
-                    if (displayInputStream != null)
+                    if (displayInput != null)
                     {
-                        Display display = displayInputStream.readFrame();
+                        Display display = displayInput.readFrame();
                         if (display != null)
                         {
                             // Write out the first part of the display.
@@ -262,8 +301,8 @@ public class ComposeVideo
                         }
                         else
                         {
-                            displayInputStream.close();
-                            displayInputStream = null;
+                            displayInput.close();
+                            displayInput = null;
                         }
                     }
                 }
@@ -277,9 +316,9 @@ public class ComposeVideo
                 videoOutputStream.writeVSync();
 
                 // Write the sound data (at 50 or 60 fps).
-                if (soundInputStream != null)
+                if (sndInput != null)
                 {
-                    byte[] soundData = soundInputStream.readFrame();
+                    byte[] soundData = sndInput.readFrame();
                     if (soundData != null)
                     {
                         videoOutputStream.writeSoundData(soundData);
@@ -288,26 +327,35 @@ public class ComposeVideo
                     }
                     else
                     {
-                        soundInputStream.close();
-                        soundInputStream = null;
+                        sndInput.close();
+                        sndInput = null;
                     }
                 }
 
                 // Write the speech data (at 40 fps).
-                if (lpcInputStream != null &&
-                    readyForLpcFrame(videoFrequency, videoOutputStream))
+                if (lpcInput != null &&
+                    readyForLpcFrame(videoFrequency,
+                                     speechStartVsync,
+                                     videoOutputStream))
                 {
-                    byte[] speechData = lpcInputStream.readFrame();
-                    if (speechData != null)
+                    if (speechSuppressCount > 0)
                     {
-                        videoOutputStream.writeSpeechData(speechData);
-
-                        speechFrameCount++;
+                        speechSuppressCount--;
                     }
                     else
                     {
-                        lpcInputStream.close();
-                        lpcInputStream = null;
+                        byte[] speechData = lpcInput.readFrame();
+                        if (speechData != null)
+                        {
+                            videoOutputStream.writeSpeechData(speechData);
+
+                            speechFrameCount++;
+                        }
+                        else
+                        {
+                            lpcInput.close();
+                            lpcInput = null;
+                        }
                     }
                 }
             }
@@ -327,17 +375,17 @@ public class ComposeVideo
         }
         finally
         {
-            if (displayInputStream != null)
+            if (displayInput != null)
             {
-                displayInputStream.close();
+                displayInput.close();
             }
-            if (soundInputStream != null)
+            if (sndInput != null)
             {
-                soundInputStream.close();
+                sndInput.close();
             }
-            if (lpcInputStream != null)
+            if (lpcInput != null)
             {
-                lpcInputStream.close();
+                lpcInput.close();
             }
         }
     }
@@ -428,14 +476,37 @@ public class ComposeVideo
     }
 
 
+    /**
+     * Returns whether it is time to insert an LPC speech frame into the
+     * stream.
+     * @param videoFrequency    the frequency of the Vsyncs.
+     * @param speechStartVsync  the sequence number of the Vsync at which the
+     *                          speech started.
+     * @param videoOutputStream the output stream that is accumulating all
+     *                          video/sound/speech/Vsync/... frames.
+     */
     private static boolean readyForLpcFrame(double            videoFrequency,
+                                            int               speechStartVsync,
                                             VideoOutputStream videoOutputStream)
     {
-        int vsyncCount = videoOutputStream.getVsyncCount();
+        int vsyncCount = videoOutputStream.getVsyncCount() - speechStartVsync;
 
         // Was the previous Vsync in a different speech frame?
-        return (int)((vsyncCount-1) / videoFrequency * LPC_FREQUENCY + 1.0) !=
-               (int)( vsyncCount    / videoFrequency * LPC_FREQUENCY + 1.0);
+        return (int)((vsyncCount+1) / videoFrequency * LPC_FREQUENCY) !=
+               (int)((vsyncCount+2) / videoFrequency * LPC_FREQUENCY);
+    }
+
+
+    private static double videoFrequency(String frameFrequency)
+    {
+        return switch (frameFrequency.toUpperCase())
+        {
+            case "NTSC",
+                 "60HZ" -> NTSC_FREQUENCY;
+            case "PAL",
+                 "50HZ" -> PAL_FREQUENCY;
+            default     -> Double.parseDouble(frameFrequency);
+        };
     }
 
 
