@@ -9,6 +9,7 @@ cd $(dirname "$0") \
 && zip -q --junk-paths  tools/out/videotools.jar \
      player/layout.xml \
      player/out/romc.bin \
-&& zip -q tools/out/videotools.jar \
+&& cd tools \
+&& zip -q out/videotools.jar \
      hum/*.txt \
 || exit 1
