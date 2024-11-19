@@ -269,6 +269,7 @@ implements   Cloneable
             LpcRepeatFrame frame = (LpcRepeatFrame)lpcFrame;
 
             energyIndex = frame.energy;
+            pitchIndex  = frame.pitch;
         }
         else if (lpcFrame instanceof LpcUnvoicedFrame)
         {
