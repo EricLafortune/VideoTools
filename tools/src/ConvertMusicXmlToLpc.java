@@ -170,10 +170,11 @@ public class ConvertMusicXmlToLpc
         int    tooHighNoteCount = 0;
 
         // Write the output.
-        try (LpcFrameOutputStream lpcFrameOutputStream =
+        try (LpcFrameOutput lpcFrameOutput =
+                 new RepeatingLpcFrameOutput(
                  new LpcFrameOutputStream(
                  new BufferedOutputStream(
-                 new FileOutputStream(outputLpcFileName))))
+                 new FileOutputStream(outputLpcFileName)))))
         {
             double  currentTime         = 0.0;
             int     currentNoteTime     = 0;
@@ -306,14 +307,14 @@ public class ConvertMusicXmlToLpc
                 }
 
                 // Write out the frame.
-                lpcFrameOutputStream.writeFrame(frame);
+                lpcFrameOutput.writeFrame(frame);
 
                 currentTime += frameDuration;
             }
 
             if (addStopFrame)
             {
-                lpcFrameOutputStream.writeFrame(new LpcStopFrame());
+                lpcFrameOutput.writeFrame(new LpcStopFrame());
             }
         }
 
@@ -377,7 +378,9 @@ public class ConvertMusicXmlToLpc
     {
         List<LpcFrame> frames = new ArrayList<>();
 
-        try (LpcFrameInput lpcFrameInput = lpcFrameInput(fileName))
+        try (LpcFrameInput lpcFrameInput =
+                 new NonRepeatingLpcFrameInput(
+                 lpcFrameInput(fileName)))
         {
             LpcFrame frame;
             while ((frame = lpcFrameInput.readFrame()) != null)
@@ -445,36 +448,51 @@ public class ConvertMusicXmlToLpc
         // Pick the right frame from the hum.
         // We're splitting the attack and the release at 2/3's of the hum.
         int splitIndex = hum.length * 2 / 3;
-        if (frameIndex <= splitIndex && !tiePrevious)
+
+        // Short note?
+        if (frameCount <= hum.length)
         {
-            // Attack, with the first half of the hum.
+            // Subsample the hum.
+            frame = hum[frameIndex * hum.length / frameCount].clone();
+
+            if (DEBUG)
+            {
+                System.out.println("  ["+frameIndex+"/"+frameCount+"] Subsample ["+frameIndex+"] "+frame);
+            }
+        }
+        // Attack phase?
+        else if (frameIndex <= splitIndex && !tiePrevious)
+        {
+            // Attack, with the first part of the hum.
             frame = hum[frameIndex].clone();
 
             if (DEBUG)
             {
-                System.out.println("  ["+frameIndex+"/"+frameCount+"] Attack  ["+frameIndex+"] "+frame);
+                System.out.println("  ["+frameIndex+"/"+frameCount+"] Attack    ["+frameIndex+"] "+frame);
             }
         }
+        // Release phase?
         else if (hum.length - frameCount + frameIndex > splitIndex && !tieNext)
         {
-            // Release, with the second half of the hum.
+            // Release, with the second part of the hum.
             frame = hum[hum.length - frameCount + frameIndex].clone();
 
             if (DEBUG)
             {
-                System.out.println("  [" + frameIndex + "/" + frameCount + "] Release [" + (hum.length - frameCount + frameIndex) + "] " + frame);
+                System.out.println("  [" + frameIndex + "/" + frameCount + "] Release   [" + (hum.length - frameCount + frameIndex) + "] " + frame);
             }
         }
+        // Sustain phase.
         else
         {
-            // Sustain, repeating the center frame of the hum.
+            // Sustain, repeating the split frame of the hum.
             // We're adding some tremolo to make it sound slightly
             // more natural.
             frame = new LpcRepeatFrame(((LpcEnergyFrame)hum[splitIndex]).energy - (int)(2 * Math.random()), 0);
 
             if (DEBUG)
             {
-                System.out.println("  ["+frameIndex+"/"+frameCount+"] Sustain ["+splitIndex+"] "+frame);
+                System.out.println("  ["+frameIndex+"/"+frameCount+"] Sustain   ["+splitIndex+"] "+frame);
             }
         }
 
