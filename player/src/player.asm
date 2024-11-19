@@ -65,7 +65,7 @@ play_without_speech
     limi 0
     lwpi workspace
 
-    clr  r10                   ; Cache a dummy speech address.
+    li   r10, unused           ; Cache a dummy speech address.
     jmp  !
 
 play_with_speech
@@ -253,6 +253,9 @@ quit
     .switch_bank @module_bank_selection ; Reset to the first bank.
 
     blwp @reset_vector         ; Return to the title screen.
+
+unused
+    data 0                     ; Dummy location for suppressed speech data.
 
     .ifgt  $, workspace
     .error 'Scratch-pad code block too large'
