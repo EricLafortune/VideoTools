@@ -704,10 +704,11 @@ public class ConvertWavToLpc
         fixSilences(frames, frameCounter);
 
         // Write the output.
-        try (LpcFrameOutputStream lpcFrameOutputStream =
+        try (LpcFrameOutput lpcFrameOutput =
+                 new RepeatingLpcFrameOutput(
                  new LpcFrameOutputStream(
                  new BufferedOutputStream(
-                 new FileOutputStream(outputLpcFileName))))
+                 new FileOutputStream(outputLpcFileName)))))
         {
             int startIndex = 0;
             int endIndex   = frameCounter;
@@ -731,12 +732,12 @@ public class ConvertWavToLpc
             for (int index = startIndex; index < endIndex; index++)
             {
                 // Write out the frame.
-                lpcFrameOutputStream.writeFrame(frames[index]);
+                lpcFrameOutput.writeFrame(frames[index]);
             }
 
             if (addStopFrame)
             {
-                lpcFrameOutputStream.writeFrame(new LpcStopFrame());
+                lpcFrameOutput.writeFrame(new LpcStopFrame());
             }
         }
     }
