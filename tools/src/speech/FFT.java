@@ -1,7 +1,7 @@
 /*
  * Video tools for the TI-99/4A home computer.
  *
- *    Copyright (c) 2022 Eric Lafortune
+ *    Copyright (c) 2022-2024 Eric Lafortune
  *
  * FFT code derived from fft.c:
  *

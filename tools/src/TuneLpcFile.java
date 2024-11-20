@@ -1,7 +1,7 @@
 /*
  * Video tools for the TI-99/4A home computer.
  *
- * Copyright (c) 2022 Eric Lafortune
+ * Copyright (c) 2022-2024 Eric Lafortune
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
