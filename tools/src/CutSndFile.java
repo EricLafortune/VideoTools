@@ -42,7 +42,7 @@ public class CutSndFile
         int    stopFrame         = Integer.parseInt(args[2]);
         String outputSndFileName = args[3];
 
-        try (SoundCommandInputStream sndCommandInputStream =
+        try (SoundCommandInput sndCommandInput =
                  new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputSndFileName))))
@@ -52,12 +52,12 @@ public class CutSndFile
                      new BufferedOutputStream(
                      new FileOutputStream(outputSndFileName))))
             {
-                sndCommandInputStream.skipFrames(startFrame);
+                sndCommandInput.skipFrames(startFrame);
 
                 for (int counter = startFrame; counter < stopFrame; counter++)
                 {
                     SoundCommand[] frame =
-                        sndCommandInputStream.readFrame();
+                        sndCommandInput.readFrame();
 
                     if (frame == null)
                     {

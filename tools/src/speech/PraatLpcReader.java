@@ -29,12 +29,11 @@ import java.io.*;
  * @see https://www.fon.hum.uva.nl/praat/
  */
 public class PraatLpcReader
-implements   AutoCloseable
+implements   PraatLpcFrameInput
 {
     private static final String FILE_TYPE_HEADER    = "File type = \"ooTextFile\"";
     private static final String OBJECT_CLASS_HEADER = "Object class = \"LPC 1\"";
 
-    private static final boolean DEBUG       = false;
 
     private final LineNumberReader reader;
 
@@ -123,6 +122,8 @@ implements   AutoCloseable
     }
 
 
+    // Implementation for PraatLpcFrameInput.
+
     /**
      * Parses and returns the gain and the predictor coefficients of the
      * next frame in the reader. The returned frame does not contain an
@@ -157,27 +158,6 @@ implements   AutoCloseable
         frameCounter++;
 
         return new PraatLpcFrame(0.0, 0.0, gain, coefficients);
-    }
-
-
-    /**
-     * Skips a frame (only at the start of a reader).
-     */
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    /**
-     * Skips the given number of frames (only at the start of a reader).
-     */
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
     }
 
 

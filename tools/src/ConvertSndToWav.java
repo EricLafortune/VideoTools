@@ -76,12 +76,12 @@ public class ConvertSndToWav
         // Count the number of sound frames in the input file.
         int frameCount = 0;
 
-        try (SoundCommandInputStream sndCommandInputStream =
+        try (SoundCommandInput sndCommandInput =
                  new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputFileName))))
         {
-            while (sndCommandInputStream.readFrame() != null)
+            while (sndCommandInput.readFrame() != null)
             {
                 frameCount++;
             }

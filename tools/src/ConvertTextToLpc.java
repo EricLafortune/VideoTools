@@ -39,12 +39,12 @@ public class ConvertTextToLpc
         String inputTextFileName = args[argIndex++];
         String outputLpcFileName = args[argIndex++];
 
-        try (LpcFrameReader lpcFrameReader =
+        try (LpcFrameInput lpcFrameInput =
                  new LpcFrameReader(
                  new BufferedReader(
                  new FileReader(inputTextFileName))))
         {
-            try (LpcFrameOutputStream lpcFrameOutputStream =
+            try (LpcFrameOutput lpcFrameOutput =
                      new LpcFrameOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(outputLpcFileName))))
@@ -52,14 +52,14 @@ public class ConvertTextToLpc
                 while (true)
                 {
                     LpcFrame lpcFrame =
-                        lpcFrameReader.readFrame();
+                        lpcFrameInput.readFrame();
 
                     if (lpcFrame == null)
                     {
                         break;
                     }
 
-                    lpcFrameOutputStream.writeFrame(lpcFrame);
+                    lpcFrameOutput.writeFrame(lpcFrame);
                 }
             }
         }

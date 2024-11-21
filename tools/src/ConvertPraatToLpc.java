@@ -95,10 +95,11 @@ public class ConvertPraatToLpc
             }
 
             // Convert all frames.
-            try (LpcFrameOutputStream lpcFrameOutputStream =
+            try (LpcFrameOutput lpcFrameOutput =
+                     new RepeatingLpcFrameOutput(
                      new LpcFrameOutputStream(
                      new BufferedOutputStream(
-                     new FileOutputStream(lpcFileName))))
+                     new FileOutputStream(lpcFileName)))))
             {
                 // Read all input frames and write the corresponding
                 // output frames.
@@ -119,12 +120,12 @@ public class ConvertPraatToLpc
                                        inputFrame.gain,
                                        inputFrame.predictorCoefficients);
 
-                    lpcFrameOutputStream.writeFrame(outputFrame);
+                    lpcFrameOutput.writeFrame(outputFrame);
                 }
 
                 if (addStopFrame)
                 {
-                    lpcFrameOutputStream.writeFrame(new LpcStopFrame());
+                    lpcFrameOutput.writeFrame(new LpcStopFrame());
                 }
             }
         }

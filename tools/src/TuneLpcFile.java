@@ -88,18 +88,18 @@ public class TuneLpcFile
                  new BufferedInputStream(
                  new FileInputStream(inputLpcFileName))))
         {
-            try (SoundCommandInputStream sndCommandInputStream =
+            try (SoundCommandInput sndCommandInput =
                      new SoundCommandInputStream(
                      new BufferedInputStream(
                      new FileInputStream(inputSndFileName))))
             {
-                try (LpcFrameOutputStream lpcFrameOutputStream =
+                try (LpcFrameOutput lpcFrameOutput =
                          new LpcFrameOutputStream(
                          new BufferedOutputStream(
                          new FileOutputStream(outputLpcFileName))))
                 {
                     lpcFrameInput.skipFrames(inputLpcStartFrame);
-                    sndCommandInputStream.skipFrames(inputSndStartFrame);
+                    sndCommandInput.skipFrames(inputSndStartFrame);
 
                     int currentSoundFrequency = (int)minFrequency;
 
@@ -114,7 +114,7 @@ public class TuneLpcFile
                         }
 
                         SoundCommand[] soundCommands =
-                            sndCommandInputStream.readFrame();
+                            sndCommandInput.readFrame();
 
                         // Retrieve the current sound frequency, if specified
                         // (at 50 fps).
@@ -142,7 +142,7 @@ public class TuneLpcFile
                                            maxFrequency,
                                            lpcFrame);
 
-                            lpcFrameOutputStream.writeFrame(lpcFrame);
+                            lpcFrameOutput.writeFrame(lpcFrame);
                         }
                     }
                 }

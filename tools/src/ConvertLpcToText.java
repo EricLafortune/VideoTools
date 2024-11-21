@@ -45,7 +45,7 @@ public class ConvertLpcToText
                  new BufferedInputStream(
                  new FileInputStream(inputLpcFileName))))
         {
-            try (LpcFrameWriter lpcFrameWriter =
+            try (LpcFrameOutput lpcFrameOutput =
                      new LpcFrameWriter(
                      new BufferedWriter(
                      new FileWriter(outputTextFileName))))
@@ -60,7 +60,7 @@ public class ConvertLpcToText
                         break;
                     }
 
-                    lpcFrameWriter.writeFrame(lpcFrame);
+                    lpcFrameOutput.writeFrame(lpcFrame);
                 }
             }
         }

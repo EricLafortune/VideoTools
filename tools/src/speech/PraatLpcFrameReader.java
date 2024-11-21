@@ -29,7 +29,7 @@ import java.io.*;
  * @see https://www.fon.hum.uva.nl/praat/
  */
 public class PraatLpcFrameReader
-implements   AutoCloseable
+implements   PraatLpcFrameInput
 {
     private final PraatPitchReader pitchReader;
     private final PraatLpcReader   lpcReader;
@@ -129,9 +129,8 @@ implements   AutoCloseable
     }
 
 
-    /**
-     * Parses and returns the next frame in the reader.
-     */
+    // Implementation for PraatLpcFrameInput.
+
     public PraatLpcFrame readFrame() throws IOException
     {
         // Get the partial frames.
@@ -152,27 +151,6 @@ implements   AutoCloseable
                                  pitchFrame.frequency,
                                  lpcFrame.gain,
                                  lpcFrame.predictorCoefficients);
-    }
-
-
-    /**
-     * Skips a frame (only at the start of a reader).
-     */
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    /**
-     * Skips the given number of frames (only at the start of a reader).
-     */
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
     }
 
 

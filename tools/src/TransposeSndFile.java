@@ -99,7 +99,7 @@ public class TransposeSndFile
         String inputFileName  = args[argIndex++];
         String outputFileName = args[argIndex++];
 
-        try (SoundCommandInputStream sndCommandInputStream =
+        try (SoundCommandInput sndCommandInput =
                  new SoundCommandInputStream(
                  new BufferedInputStream(
                  new FileInputStream(inputFileName)),
@@ -134,7 +134,7 @@ public class TransposeSndFile
                 while (true)
                 {
                     // Read the commands of this frame.
-                    SoundCommand[] commands = sndCommandInputStream.readFrame();
+                    SoundCommand[] commands = sndCommandInput.readFrame();
                     if (commands == null)
                     {
                         break;

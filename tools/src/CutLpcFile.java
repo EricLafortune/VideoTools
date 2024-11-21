@@ -73,7 +73,7 @@ public class CutLpcFile
                  new BufferedInputStream(
                  new FileInputStream(inputLpcFileName))))
         {
-            try (LpcFrameOutputStream lpcFrameOutputStream =
+            try (LpcFrameOutput lpcFrameOutput =
                      new LpcFrameOutputStream(
                      new BufferedOutputStream(
                      new FileOutputStream(outputLpcFileName))))
@@ -90,12 +90,12 @@ public class CutLpcFile
                         break;
                     }
 
-                    lpcFrameOutputStream.writeFrame(lpcFrame);
+                    lpcFrameOutput.writeFrame(lpcFrame);
                 }
 
                 if (addStopFrame)
                 {
-                    lpcFrameOutputStream.writeFrame(new LpcStopFrame());
+                    lpcFrameOutput.writeFrame(new LpcStopFrame());
                 }
             }
         }

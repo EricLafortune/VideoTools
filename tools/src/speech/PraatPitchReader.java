@@ -29,7 +29,7 @@ import java.io.*;
  * @see https://www.fon.hum.uva.nl/praat/
  */
 public class PraatPitchReader
-implements   AutoCloseable
+implements   PraatLpcFrameInput
 {
     private static final String FILE_TYPE_HEADER    = "File type = \"ooTextFile\"";
     private static final String OBJECT_CLASS_HEADER = "Object class = \"Pitch 1\"";
@@ -37,7 +37,6 @@ implements   AutoCloseable
     private static final double SAMPLING_PERIOD     = 0.000125;
     private static final int    MAX_N_COEFFICIENTS  = 10;
 
-    private static final boolean DEBUG       = false;
 
     private final LineNumberReader reader;
 
@@ -131,6 +130,8 @@ implements   AutoCloseable
     }
 
 
+    // Implementation for PraatLpcFrameInput.
+
     /**
      * Parses and returns the intensity and the frequency of the pitch contour
      * for the next frame in the reader. The returned frame does not contain a
@@ -165,27 +166,6 @@ implements   AutoCloseable
         frameCounter++;
 
         return new PraatLpcFrame(intensity, frequency, 0.0, null);
-    }
-
-
-    /**
-     * Skips a frame (only at the start of a reader).
-     */
-    public void skipFrame() throws IOException
-    {
-        readFrame();
-    }
-
-
-    /**
-     * Skips the given number of frames (only at the start of a reader).
-     */
-    public void skipFrames(int count) throws IOException
-    {
-        for (int counter = 0; counter < count; counter++)
-        {
-            skipFrame();
-        }
     }
 
 
