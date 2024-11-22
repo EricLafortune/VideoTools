@@ -358,10 +358,26 @@ implements   AutoCloseable
                                       StartElement   startElement)
     throws XMLStreamException
     {
+        // The divisions, beats, beat type,... are defined for a measure, but
+        // they remain valid for all subsequent measures.
+        // We're assuming they are the same for the entire score (parts and
+        // measures), except for the metronome per minute, which can change
+        // between measures.
         switch (startElement.getName().getLocalPart())
         {
-            case     "measure"            : currentMeasureNumber      = intAttribute(startElement, "number"); if (metronomePerMinutes.size() < currentMeasureNumber) metronomePerMinutes.add(currentMetronomePerMinute); break;
-            case             "per-minute" : currentMetronomePerMinute = intText(reader);                                                                             metronomePerMinutes.set(currentMeasureNumber-1, currentMetronomePerMinute); break;
+          //case "score-partwise"         :
+          //case   "part"                 :
+            case     "measure"            : parseAnyMeasureElement(startElement);break;
+          //case       "attributes"       :
+            case         "divisions"      : currentDivisions = intText(reader); break;
+          //case         "time"           :
+            case           "beats"        : currentBeats    = intText(reader); break;
+            case           "beat-type"    : currentBeatType = intText(reader); break;
+          //case       "direction"        :
+          //case         "direction-type" :
+          //case           "metronome"    :
+            case             "beat-unit"  : currentMetronomeBeatUnit  = text(reader); break;
+            case             "per-minute" : currentMetronomePerMinute = intText(reader); metronomePerMinutes.set(currentMeasureNumber-1, currentMetronomePerMinute); break;
         }
     }
 
@@ -390,16 +406,6 @@ implements   AutoCloseable
             case     "measure"              : return parseMeasureElement(startElement);
             case       "barline"            : return true;
             case         "repeat"           : currentRepeatStoring = attribute(startElement, "direction").equals("forward"); return false;
-            case       "attributes"         : return true;
-            case         "divisions"        : currentDivisions = intText(reader); return false;
-            case         "time"             : return true;
-            case           "beats"          : currentBeats    = intText(reader); return false;
-            case           "beat-type"      : currentBeatType = intText(reader); return false;
-            case       "direction"          : return true;
-            case         "direction-type"   : return true;
-            case           "metronome"      : return true;
-            case             "beat-unit"    : currentMetronomeBeatUnit  = text(reader); return false;
-            case             "per-minute"   : currentMetronomePerMinute = intText(reader); return false;
             case       "backup"             : currentMeasureTime = 0; return false;
             // TODO: The "forward" note (rest) needs to be duplicated and end up in all the corresponding channels.
             case       "forward"            : currentNote = new Note(); if (currentVoiceChannelIndices != null) currentNote.channelIndex = currentVoiceChannelIndices.values().iterator().next(); currentChord = false; return true;
@@ -472,12 +478,35 @@ implements   AutoCloseable
 
 
     /**
+     * Extracts global information from the given "measure" start element.
+     */
+    private void parseAnyMeasureElement(StartElement startElement)
+    {
+        currentMeasureNumber = intAttribute(startElement, "number");
+
+        // Get the current metronome per minute or update the list.
+        // Both may still be overridden in the optional "per-minute"
+        // sub-element, but we'll at least have defaults from previous
+        // measures.
+        if (currentMeasureNumber <= metronomePerMinutes.size())
+        {
+            currentMetronomePerMinute = metronomePerMinutes.get(currentMeasureNumber - 1);
+        }
+        else
+        {
+            metronomePerMinutes.add(currentMetronomePerMinute);
+        }
+    }
+
+
+    /**
      * Extracts information from the given "measure" start element.
      * Returns whether it sub-elements should be parsed.
      */
     private boolean parseMeasureElement(StartElement startElement)
     {
-        currentMeasureNumber = intAttribute(startElement, "number");
+        // The method parseAnyMeasureElement has already parsed the measure
+        // number and the metronome per minute.
 
         currentMeasureTime = 0;
 
@@ -628,13 +657,11 @@ implements   AutoCloseable
      */
     private int duration(int duration)
     {
-        int metronomePerMinute = metronomePerMinutes.get(currentMeasureNumber-1);
-
         // Compute the rounded duration as a difference between to rounded
         // measure times, to avoid rounding errors that would accumulate.
         return
-            MILLISECONDS_PER_MINUTE * (currentMeasureTime + duration) / currentDivisions / metronomePerMinute -
-            MILLISECONDS_PER_MINUTE *  currentMeasureTime             / currentDivisions / metronomePerMinute;
+            MILLISECONDS_PER_MINUTE * (currentMeasureTime + duration) / currentDivisions / currentMetronomePerMinute -
+            MILLISECONDS_PER_MINUTE *  currentMeasureTime             / currentDivisions / currentMetronomePerMinute;
     }
 
 
