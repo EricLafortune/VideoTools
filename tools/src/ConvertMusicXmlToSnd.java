@@ -41,10 +41,10 @@ public class ConvertMusicXmlToSnd
     private static final PsgComputer DEFAULT_COMPUTER        = PsgComputer.TI99;
     private static final double      DEFAULT_FRAME_FREQUENCY = SN76496.NTSC_FRAME_FREQUENCY;
 
-    private static final boolean DEBUG = false;
-
     private static final int ATTENUATION_LOUDNESS_DAMPING = 1;
     private static final int DIVIDER_LOUDNESS_DAMPING     = 1000;
+
+    private static final boolean DEBUG = false;
 
     private final int                       startMeasure;
     private final int                       endMeasure;
@@ -150,13 +150,27 @@ public class ConvertMusicXmlToSnd
         }
 
         // Check the input.
-        for (int index = 0; index < channels.length; index++)
+        for (int channelIndex = 0; channelIndex < channels.length; channelIndex++)
         {
-            if (notes[index].isEmpty())
+            SndChannelSpecification channel      = channels[channelIndex];
+            List<Note>              channelNotes = notes[channelIndex];
+            if (channelNotes.isEmpty())
             {
-                SndChannelSpecification channel = channels[index];
-
                 throw new IllegalArgumentException("Couldn't find any notes in part ["+channel.part+"], voice ["+channel.voice+"], staff ["+channel.staff+"]");
+            }
+
+            if (DEBUG)
+            {
+                int channelDuration =
+                    channelNotes.stream()
+                        .map(note -> note.duration)
+                        .mapToInt(Integer::intValue)
+                        .peek(v -> System.out.print(v+","))
+                        .sum();
+
+                System.out.println();
+
+                System.out.println("Channel "+channelIndex+" ["+channel.part+", "+channel.staff+", "+channel.voice+"]:  "+channelNotes.size()+" notes, "+channelDuration+" ms");
             }
         }
 
@@ -279,6 +293,11 @@ public class ConvertMusicXmlToSnd
                         }
                         else
                         {
+                            if (DEBUG)
+                            {
+                                System.out.println("["+channelIndex+", "+chordChannelIndex+"] Out of notes");
+                            }
+
                             // We're out of notes.
                             note = new Note(channelIndex, Integer.MAX_VALUE / 2);
                             activeChannelCount--;
