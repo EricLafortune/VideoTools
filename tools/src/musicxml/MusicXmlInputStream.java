@@ -51,7 +51,8 @@ implements   AutoCloseable
 
     private int                   skipNestedCounter;
 
-    private List<Integer>         metronomePerMinutes = new ArrayList<>();
+    private Map<String, Integer>  partDivisions              = new HashMap<>();
+    private List<Integer>         measureMetronomePerMinutes = new ArrayList<>();
 
     private String                currentPartID;
     private Map<String, Integer>  currentVoiceChannelIndices;
@@ -59,20 +60,20 @@ implements   AutoCloseable
     private int                   currentMeasureNumber;
     private int                   currentMeasureTime;
     private boolean               currentRepeatStoring;
-    private int                   currentDivisions = 1;
     private int                   currentBeats;
     private int                   currentBeatType;
     private String                currentMetronomeBeatUnit;
-    private int                   currentMetronomePerMinute = 60;
-    private int                   currentBackup;
     private Note                  currentNote;
     private Note                  previousNote;
+    private int                   currentChannelIndex;
+    private int                   previousChannelIndex = -1;
     private List<Note>            currentRepeatNotes = new ArrayList<>();
     private int                   currentRepeatNoteIndex;
     private boolean               currentChord;
     private boolean               currentTie;
     private boolean               currentTieChange;
     private boolean[]             currentTies;
+    private int                   currentDuration;
 
 
     /**
@@ -153,13 +154,14 @@ implements   AutoCloseable
                 throw new IllegalArgumentException("Can't find part ["+channel.part+"]");
             }
 
-            if (channel.voice != null && channel.voice.length() > 0)
+            if (channel.voice != null && !channel.voice.isEmpty())
             {
                 partVoiceChannelIndices
                     .computeIfAbsent(partID, key -> new HashMap<>())
                     .put(channel.voice, index);
             }
-            else
+
+            if (channel.staff > 0)
             {
                 partStaffChannelIndices
                     .computeIfAbsent(partID, key -> new HashMap<>())
@@ -232,20 +234,6 @@ implements   AutoCloseable
             previousNote.chord = currentNote;
             previousNote       = currentNote;
             currentNote        = null;
-        }
-
-        // Do we have a new note that we can complete?
-        if (currentNote != null)
-        {
-            // Update the tie state of the channel, if necessary,
-            if (currentTieChange)
-            {
-                currentTies[currentNote.channelIndex] = currentTie;
-                currentTieChange = false;
-            }
-
-            // Set the tie state of the note.
-            currentNote.tieNext = currentTies[currentNote.channelIndex];
         }
 
         // Do we have a new note that we should remember for repeating?
@@ -328,7 +316,10 @@ implements   AutoCloseable
             }
             else if (event.isEndElement())
             {
-                if (skipNestedCounter == 0)
+                // Parse the end element, if it is not skipped.
+                if (skipNestedCounter == 0 &&
+                    parseEndElement(reader,
+                                    event.asEndElement()))
                 {
                     // Have we reached the target end element?
                     String endElementName = event.asEndElement().getName().getLocalPart();
@@ -367,17 +358,17 @@ implements   AutoCloseable
         {
           //case "score-partwise"         :
           //case   "part"                 :
-            case     "measure"            : parseAnyMeasureElement(startElement);break;
+            case     "measure"            : currentMeasureNumber = intAttribute(startElement, "number"); break;
           //case       "attributes"       :
-            case         "divisions"      : currentDivisions = intText(reader); break;
+            case         "divisions"      : partDivisions.put(currentPartID, intText(reader)); break;
           //case         "time"           :
             case           "beats"        : currentBeats    = intText(reader); break;
             case           "beat-type"    : currentBeatType = intText(reader); break;
           //case       "direction"        :
           //case         "direction-type" :
           //case           "metronome"    :
-            case             "beat-unit"  : currentMetronomeBeatUnit  = text(reader); break;
-            case             "per-minute" : currentMetronomePerMinute = intText(reader); metronomePerMinutes.set(currentMeasureNumber-1, currentMetronomePerMinute); break;
+          //case             "beat-unit"  : currentMetronomeBeatUnit = text(reader); break;
+            case             "per-minute" : if (measureMetronomePerMinutes.size() < currentMeasureNumber) measureMetronomePerMinutes.add(intText(reader)); else measureMetronomePerMinutes.set(currentMeasureNumber - 1, intText(reader)); break;
         }
     }
 
@@ -406,13 +397,14 @@ implements   AutoCloseable
             case     "measure"              : return parseMeasureElement(startElement);
             case       "barline"            : return true;
             case         "repeat"           : currentRepeatStoring = attribute(startElement, "direction").equals("forward"); return false;
-            case       "backup"             : currentMeasureTime = 0; return false;
-            // TODO: The "forward" note (rest) needs to be duplicated and end up in all the corresponding channels.
-            case       "forward"            : currentNote = new Note(); if (currentVoiceChannelIndices != null) currentNote.channelIndex = currentVoiceChannelIndices.values().iterator().next(); currentChord = false; return true;
+          // We're ignoring backups, detecting channel changes instead, and clipping notes if they pass a measure.
+          //case       "backup"             :
+            // TODO: The "forward" note (rest) needs to be duplicated and end up in all corresponding channels.
+            case       "forward"            : currentNote = new Note(); if (currentVoiceChannelIndices != null) currentChannelIndex = currentVoiceChannelIndices.values().iterator().next(); currentChord = false; currentTieChange = false; return true;
           // Handled like an element of "note".
           //case         "duration"         : ...
           //case         "staff"            : ...
-            case       "note"               : currentNote = new Note(); currentNote.attenuation = attenuation(currentMeasureTime); currentChord = false; return true;
+            case       "note"               : currentNote = new Note(); currentChord = false; currentTieChange = false; return true;
             case         "chord"            : currentChord = true; return false;
             case         "pitch"            : currentNote.frequency = 16.35160156; return true;
             case           "step"           : currentNote.frequency *= Math.pow(2.0, noteNumber(text(reader)) / 12.0); return false;
@@ -424,7 +416,7 @@ implements   AutoCloseable
             case         "rest"             : currentNote.frequency = 0.0; return false;
             case         "tie"              : currentTie = attribute(startElement, "type").equals("start"); currentTieChange = true; return false;
             // "duration" and "staff" inside "forward" or "note".
-            case         "duration"         : return parseDuration(reader);
+            case         "duration"         : currentDuration = intText(reader); return false;
             case         "staff"            : return parseStaffElement(reader);
             case         "voice"            : return parseVoiceElement(reader);
             case         "notations"        : return true;
@@ -478,60 +470,20 @@ implements   AutoCloseable
 
 
     /**
-     * Extracts global information from the given "measure" start element.
-     */
-    private void parseAnyMeasureElement(StartElement startElement)
-    {
-        currentMeasureNumber = intAttribute(startElement, "number");
-
-        // Get the current metronome per minute or update the list.
-        // Both may still be overridden in the optional "per-minute"
-        // sub-element, but we'll at least have defaults from previous
-        // measures.
-        if (currentMeasureNumber <= metronomePerMinutes.size())
-        {
-            currentMetronomePerMinute = metronomePerMinutes.get(currentMeasureNumber - 1);
-        }
-        else
-        {
-            metronomePerMinutes.add(currentMetronomePerMinute);
-        }
-    }
-
-
-    /**
      * Extracts information from the given "measure" start element.
      * Returns whether it sub-elements should be parsed.
      */
     private boolean parseMeasureElement(StartElement startElement)
     {
-        // The method parseAnyMeasureElement has already parsed the measure
-        // number and the metronome per minute.
+        // The method parseAnyStartElement has already parsed the measure
+        // number, the time beats, and the metronome per minute.
 
-        currentMeasureTime = 0;
+        // We're starting a new measure, voice, and staff.
+        currentMeasureTime   = 0;
+        previousChannelIndex = -1;
 
         return currentMeasureNumber >= startMeasure &&
                currentMeasureNumber <= endMeasure;
-    }
-
-
-    /**
-     * Extracts information from the given "duration" start element.
-     * Returns whether it sub-elements should be parsed.
-     */
-    private boolean parseDuration(XMLEventReader reader)
-    throws XMLStreamException
-    {
-        int duration = intText(reader);
-
-        currentNote.duration = duration(duration);
-
-        if (!currentChord)
-        {
-            currentMeasureTime += duration;
-        }
-
-        return false;
     }
 
 
@@ -571,15 +523,18 @@ implements   AutoCloseable
                                         T               name)
     {
         // Avoid the "staff" element inside the "direction" element.
-        if (currentNote != null && nameChannelIndices != null)
+        if (nameChannelIndices != null)
         {
+            // Is the channel specified?
             Integer channelIndex = nameChannelIndices.get(name);
             if (channelIndex != null)
             {
-                currentNote.channelIndex = channelIndex;
+                // Remember the channel index.
+                currentChannelIndex = channelIndex;
             }
             else
             {
+                // Skip the filtered note.
                 skipNote();
             }
         }
@@ -628,6 +583,115 @@ implements   AutoCloseable
 
 
     /**
+     * Extracts information from the given end element that is part of
+     * specified channels. Returns whether parsing the element produced
+     * a note.
+     */
+    private boolean parseEndElement(XMLEventReader reader,
+                                 EndElement     endElement)
+    throws XMLStreamException
+    {
+        switch (endElement.getName().getLocalPart())
+        {
+            case "forward",
+                 "note"   : return finalizeNote();
+            default       : return true;
+        }
+    }
+
+
+    /**
+     * Finalizes the current note at the "forward" or "note" end elements,
+     * when we know to which channel it belongs. Returns whether we got a note.
+     * We may still skip the note if it is clipped to the end of the current
+     * measure.
+     */
+    private boolean finalizeNote()
+    {
+        // Check if we've moved or backed up to another voice or another staff.
+        if (previousChannelIndex != currentChannelIndex)
+        {
+            // Remember the new channel index.
+            previousChannelIndex = currentChannelIndex;
+
+            // We can then start filling another measure.
+            currentMeasureTime = 0;
+        }
+
+        // Update the tie state of the channel, if necessary,
+        if (currentTieChange)
+        {
+            currentTies[currentNote.channelIndex] = currentTie;
+        }
+
+        if (!currentChord)
+        {
+            // Set the duration of the note.
+            int duration = clippedNoteDuration(currentDuration);
+            if (duration > 0)
+            {
+                currentNote.duration = duration;
+            }
+            else
+            {
+                // Skip the note if it was clipped to a 0 duration,
+                // e.g. for the spurious notes and rests in measures 22
+                // and 23 of 'K608 Fantasia for Mechanical Organ.mxl'.
+                skipNote();
+
+                if (DEBUG)
+                {
+                    System.out.println("Skipping clipped note");
+                }
+
+                return false;
+            }
+
+            // Set the channel index of the note.
+            currentNote.channelIndex = currentChannelIndex;
+
+            // Set the attenuation of the note.
+            if (!currentNote.isRest())
+            {
+                currentNote.attenuation += attenuation(currentMeasureTime);
+            }
+
+            // Set the tie state of the note.
+            currentNote.tieNext = currentTies[currentNote.channelIndex];
+
+            // Update the measure time.
+            currentMeasureTime += currentDuration;
+        }
+        else
+        {
+            // Didn't we skip the previous chord note?
+            if (previousNote != null)
+            {
+                // Copy the common properties of the chord note.
+                currentNote.channelIndex = previousNote.channelIndex;
+                currentNote.duration     = previousNote.duration;
+                currentNote.attenuation  = previousNote.attenuation;
+                currentNote.tieNext      = previousNote.tieNext;
+            }
+            else
+            {
+                // Skip the chord note as well.
+                skipNote();
+
+                if (DEBUG)
+                {
+                    System.out.println("Skipping chord note");
+                }
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
      * Returns the number of the given note: C=0, C#=1, D=2,..., B=11.
      */
     private int noteNumber(String note)
@@ -652,38 +716,116 @@ implements   AutoCloseable
 
 
     /**
-     * Returns the duration in milliseconds for the note duration in the
-     * current settings.
+     * Returns the duration, expressed in milliseconds, for the given duration,
+     * expressed as a number of divisions, given the current state. The
+     * duration may be clipped to fit the measure.
      */
-    private int duration(int duration)
+    private int clippedNoteDuration(int duration)
     {
         // Compute the rounded duration as a difference between to rounded
         // measure times, to avoid rounding errors that would accumulate.
         return
-            MILLISECONDS_PER_MINUTE * (currentMeasureTime + duration) / currentDivisions / currentMetronomePerMinute -
-            MILLISECONDS_PER_MINUTE *  currentMeasureTime             / currentDivisions / currentMetronomePerMinute;
+            MILLISECONDS_PER_MINUTE * clippedMeasureTime(currentMeasureTime + duration) / divisions() / metronomePerMinute() -
+            MILLISECONDS_PER_MINUTE * clippedMeasureTime(currentMeasureTime)            / divisions() / metronomePerMinute();
+    }
+
+
+    /**
+     * Returns the given time in the measure, expressed as a number of
+     * divisions, clipped to the maximum measure time. This can be useful to
+     * work around rounding errors in the input.
+     */
+    private int clippedMeasureTime(int measureTime)
+    {
+        int measureDuration = measureDuration();
+
+        // We clip to the measure duration, but we even round up a longer
+        // measure duration minus 1 to the full measure duration, e.g. for
+        // measure 10 of 'K608 Fantasia for Mechanical Organ.mxl'.
+        return measureTime < measureDuration - (measureDuration < 100 ? 0 : 1) ?
+            measureTime :
+            measureDuration;
+    }
+
+
+    /**
+     * Returns the duration of a measure, expressed as a number of
+     * divisions, for the current part.
+     */
+    private int measureDuration()
+    {
+        // The divisions are a number of divisions per quarter note.
+        // The 4 is the number of quarter notes per whole note.
+        // The beats are a number of beat types per measure.
+        // The beat type is a number of beat types per whole note.
+        return divisions() * 4 * currentBeats / currentBeatType;
     }
 
 
     /**
      * Returns the attenuation (0, 1, or 2) of the given time in a measure,
-     * expressed in the number of divisions.
+     * expressed as a number of divisions.
      */
     private int attenuation(int measureTime)
     {
         return
-            measureTime == 0                                                 ? 0 : // First beat of the measure.
-            currentBeats % 3 == 0 && measureTime % (3*currentDivisions) == 0 ? 1 : // For 3,6,9,12 beats, every third beat.
-                                                                               2;  // All other beats.
+            measureTime == 0                                                                    ? 0 : // First beat of the measure.
+            currentBeats % 3 == 0 && measureTime % (3 * divisions() * 4 / currentBeatType) == 0 ? 1 : // For 3,6,9,12 beats, every third beat.
+                                                                                                  2;  // All other beats.
     }
 
 
     /**
-     * Skips a note, while immediately inside one of its elements.
+     * Returns the number of metronome beats per minute for the current
+     * measure. We're assuming it's the same for all parts.
+     */
+    private int metronomePerMinute()
+    {
+        // The metronome beats may be different for different measures,
+        // e.g. in 'OFortuna.mxl'.
+        int  measureIndex = currentMeasureNumber - 1;
+
+        Integer metronomePerMinute;
+
+        // Do we have a value for the current measure?
+        if (measureIndex < measureMetronomePerMinutes.size())
+        {
+            // Retrieve the stored value.
+            metronomePerMinute = measureMetronomePerMinutes.get(measureIndex);
+        }
+        else
+        {
+            // Fall back on the value of the previous measure.
+            metronomePerMinute = measureIndex == 0 ? 60 :
+                measureMetronomePerMinutes.get(measureIndex - 1);
+
+            // Cache the value for next time.
+            measureMetronomePerMinutes.add(metronomePerMinute);
+        }
+
+        return metronomePerMinute;
+    }
+
+
+    /**
+     * Returns the number of divisions for the current part.
+     * We're assuming it's the same for all measures of a part.
+     */
+    private int divisions()
+    {
+        // The divisions may be different for different parts,
+        // e.g. in 'Who Is This.mxl'.
+        return partDivisions.getOrDefault(currentPartID, 1);
+    }
+
+
+    /**
+     * Skips a note, while inside one of its direct subelements.
      */
     private void skipNote()
     {
         currentNote       = null;
+        previousNote      = null;
         currentTie        = false;
         skipNestedCounter = 1;
     }
