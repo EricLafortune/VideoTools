@@ -102,11 +102,6 @@ TMS5200 speech synthesizer:
 
     java ConvertWavToLpc -tms5200 -minfrequency 50 -maxfrequency 250 speech.wav speech.lpc
 
-Then convert the LPC coefficients back to a sound file, in order to check the
-quality of the results:
-
-    java ConvertLpcToWav -tms5200 -analog -precise speech.lpc check.wav
-
 You can convert the LPC coefficients to a WAV sound file, in order to quickly
 check the quality of the speech in any audio player:
 
