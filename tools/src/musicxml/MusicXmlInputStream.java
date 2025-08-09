@@ -169,6 +169,10 @@ implements   AutoCloseable
             }
         }
 
+        // Add the default metronome per minutes for dummy measure 0.
+        // It will get copied or overwritten for actual measures.
+        measureMetronomePerMinutes.add(60);
+
         // Ties can cross measures, with interleaved staffs, so we need to
         // keep track of them for each channel.
         currentTies = new boolean[channels.length];
@@ -358,7 +362,7 @@ implements   AutoCloseable
         {
           //case "score-partwise"         :
           //case   "part"                 :
-            case     "measure"            : currentMeasureNumber = intAttribute(startElement, "number"); break;
+            case     "measure"            : currentMeasureNumber = intAttribute(startElement, "number"); if (currentMeasureNumber >= measureMetronomePerMinutes.size()) measureMetronomePerMinutes.add(measureMetronomePerMinutes.get(currentMeasureNumber - 1)); break;
           //case       "attributes"       :
             case         "divisions"      : partDivisions.put(currentPartID, intText(reader)); break;
           //case         "time"           :
@@ -368,7 +372,7 @@ implements   AutoCloseable
           //case         "direction-type" :
           //case           "metronome"    :
           //case             "beat-unit"  : currentMetronomeBeatUnit = text(reader); break;
-            case             "per-minute" : if (measureMetronomePerMinutes.size() < currentMeasureNumber) measureMetronomePerMinutes.add(intText(reader)); else measureMetronomePerMinutes.set(currentMeasureNumber - 1, intText(reader)); break;
+            case             "per-minute" : measureMetronomePerMinutes.set(currentMeasureNumber, intText(reader)); break;
         }
     }
 
@@ -783,27 +787,9 @@ implements   AutoCloseable
     {
         // The metronome beats may be different for different measures,
         // e.g. in 'OFortuna.mxl'.
-        int  measureIndex = currentMeasureNumber - 1;
-
-        Integer metronomePerMinute;
-
-        // Do we have a value for the current measure?
-        if (measureIndex < measureMetronomePerMinutes.size())
-        {
-            // Retrieve the stored value.
-            metronomePerMinute = measureMetronomePerMinutes.get(measureIndex);
-        }
-        else
-        {
-            // Fall back on the value of the previous measure.
-            metronomePerMinute = measureIndex == 0 ? 60 :
-                measureMetronomePerMinutes.get(measureIndex - 1);
-
-            // Cache the value for next time.
-            measureMetronomePerMinutes.add(metronomePerMinute);
-        }
-
-        return metronomePerMinute;
+        // Measure numbers start at 1, but dummy index 0 always contains the
+        // default 60.
+        return measureMetronomePerMinutes.get(currentMeasureNumber);
     }
 
 
