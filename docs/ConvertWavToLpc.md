@@ -49,7 +49,7 @@ The basic options are:
 | `-chip` _name_            | Target the specified speech synthesis chip: one of `TMS5100`, `TMS5110A`. `TMS5200` (the default), or `TMS5220`. |
 | `-tms5200`                | Short for `-chip TMS5200` (the default).                                                                         |
 | `-tms5220`                | Short for `-chip TMS5220`.                                                                                       |
-| `-amplification` _factor_ | Amplify the input sound file by the given factor (default = 0.9373).                                             |
+| `-amplification` _factor_ | Amplify the input sound file by the given factor (default = 1).                                                  |
 | `-minfrequency` _value_   | Set the minimum allowed frequency in the output LPC coefficients, expressed in Hz (default = 30.0).              |
 | `-maxfrequency` _value_   | Set the maximum allowed frequency in the output LPC coefficients, expressed in Hz (default = 600.0).             |
 | `-trimsilenceframes`      | Trim any LPC silence frames from the start and end of the output.                                                |
