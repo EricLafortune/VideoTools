@@ -169,7 +169,7 @@ emulator like Mame:
   Thierry Nouspikel.
 * [TMS 5220 Voice Synthesis Processor Data Manual](https://www.99er.net/download2/index.php?act=view&id=144),
   Texas Instruments.
-* {BlueWizard: Reflector.m](https://github.com/patrick99e99/BlueWizard/blob/master/BlueWizard/Reflector.m),
+* [BlueWizard: Reflector.m](https://github.com/patrick99e99/BlueWizard/blob/master/BlueWizard/Reflector.m),
   Patrick Collins.
 * [python_wizard: Reflector.py](https://github.com/ptwz/python_wizard/blob/master/pywizard/Reflector.py),
   ptwz.
